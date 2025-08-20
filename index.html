@@ -49,12 +49,22 @@ overflow: hidden;
 }
 
 
-.videoWrap video {
+.videoWrap video{
 width: 720px; /* 固定宽度，可根据需要调整 */
 height: auto; /* 保持竖屏比例 */
 max-height: 100%; /* 不超过容器高度 */
 object-fit: contain;
 }
+.videoWrap img{
+  width: 720px;      /* 和你的视频宽度策略一致 */
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #FCF7F4 !important;
+  border-radius: 0;  /* 按需 */
+}
+
   </style>
 </head>
 <body>
@@ -67,6 +77,8 @@ object-fit: contain;
        controlslist="nodownload noplaybackrate">
         您的浏览器不支持 video 标签。
       </video>
+          <!-- 新增：图片占位 -->
+      <img id="pic" alt="" style="display:none;" />
     </div>
     <div class="caption">
       <div class="meta">
@@ -172,18 +184,38 @@ const PAGES = [
     ]
   },
 
-  // C2. 节奏可视化
+  // C2. 节奏可视化1
   {
-    id:'viz_rhythm', type:'video+qs', tag:'可视化-节奏',
-    title:'二、可视化：节奏错误',
+    id:'viz_rhythm1', type:'video+qs', tag:'可视化-节奏',
+    title:'二、可视化：节奏错误1',
     video:'3rhythm.mp4',
     caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
     questions:[
       { id:'vr_is_rhy', label:'这些标记是否清楚地表示“节奏”？', type:'likert7', required:false },
       { id:'vr_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
       { id:'vr_kind', label:'你能分辨“太快/太慢”以及大概的误差量吗？', type:'likert7', required:false },
-      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false },
-      { id:'vr_sep_or_together', label:'分别练节奏与音高是否更有意义（相对同时练）？', type:'likert7', required:false },
+      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false }
+    ]
+  },
+  {
+    id:'viz_rhythm2', type:'video+qs', tag:'可视化-节奏',
+    title:'二、可视化：节奏错误2',
+    video:'rhythm2.png',
+    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+    questions:[
+      { id:'vr_is_rhy', label:'这些标记是否清楚地表示“节奏”？', type:'likert7', required:false },
+      { id:'vr_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
+      { id:'vr_kind', label:'你能分辨“太快/太慢”以及大概的误差量吗？', type:'likert7', required:false },
+      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false }
+    ]
+  },
+    {
+    id:'viz_rhythm3', type:'video+qs', tag:'可视化-节奏',
+    title:'二、可视化：节奏错误比较',
+    video:['rhythm1.png','rhythm2.png'],
+    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+    questions:[
+      { id:'vr_is_rhy', label:'这两种节奏错误的可视化，哪一个更加的容易理解？', type:'likert7', required:false },
       { id:'vr_open', label:'补充意见（节奏可视化）', type:'textarea', placeholder:'任何你注意到的优缺点、建议', required:false }
     ]
   },
@@ -277,46 +309,152 @@ function save(){ localStorage.setItem('eval_state_v1', JSON.stringify(STATE)); }
 function pct(n){ return Math.round((n)/(PAGES.length-1)*100); }
 
 function render(){
+  // ========== 顶部标题 & 进度 ==========
   const p = PAGES[STATE.page];
   titleEl.textContent = p.title;
   tagEl.textContent = p.tag || '';
-  bar.style.width = pct(STATE.page) + '%';
-  // 左侧视频
-  // 左侧视频
-const videoWrapEl = document.querySelector('.videoWrap');
-if (p.video) {
-  // 有视频：显示视频容器并设置视频源
-  if (videoWrapEl) videoWrapEl.style.display = 'flex';
-  vid.style.display = 'block';
-  vid.src = p.video;
-  vidCaption.textContent = p.caption || '';
-} else {
-  // 无视频（如 consent 页）：隐藏视频容器，仅显示说明文字
-  if (videoWrapEl) videoWrapEl.style.display = 'none';
-  vid.removeAttribute('src');
-  vid.load();
-  vidCaption.textContent = p.caption || '右侧答题后继续';
+  bar.style.width = Math.round((STATE.page)/(PAGES.length-1)*100) + '%';
+
+  // ========== 左侧媒体区域（支持视频/图片/数组） ==========
+  const videoWrapEl = document.querySelector('.videoWrap');
+  const vidCaptionEl = vidCaption;
+
+  // 工具：判断扩展名
+  const isVideoPath = (path) => /\.(mp4|webm|ogg)(\?.*)?$/i.test(path || '');
+  const isImagePath = (path) => /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(path || '');
+
+  // 清空并停止已有视频
+  const clearMedia = () => {
+    if (!videoWrapEl) return;
+    // 尝试暂停容器里可能存在的所有 video
+    videoWrapEl.querySelectorAll('video').forEach(v => { try { v.pause(); } catch(e){} });
+    videoWrapEl.innerHTML = '';
+  };
+
+  // 根据 p.video 渲染媒体
+  const renderMedia = (media) => {
+    if (!videoWrapEl) return;
+
+    // 显示容器并设置为“上下堆叠”
+    videoWrapEl.style.display = 'flex';
+    videoWrapEl.style.flexDirection = 'column';
+    videoWrapEl.style.alignItems = 'center';
+    videoWrapEl.style.justifyContent = 'center';
+    videoWrapEl.style.gap = '12px';
+
+    const list = Array.isArray(media) ? media : [media];
+
+    list.forEach(src => {
+      if (isVideoPath(src)) {
+        const v = document.createElement('video');
+        v.setAttribute('controls', 'controls');
+        v.setAttribute('preload', 'metadata');
+        v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        v.setAttribute('x5-playsinline', '');
+        v.setAttribute('controlslist', 'nodownload noplaybackrate');
+        v.src = src;
+        // 尺寸策略：与你现有的 video 一致
+        v.style.width = '720px';
+        v.style.maxWidth = '100%';
+        v.style.display = 'block';
+        v.style.background = '#000';
+        videoWrapEl.appendChild(v);
+      } else if (isImagePath(src)) {
+        const im = document.createElement('img');
+        im.src = src;
+        im.alt = p.title || '图片';
+        // 与视频一致的显示策略
+        im.style.width = '720px';
+        im.style.maxWidth = '100%';
+        im.style.height = 'auto';
+        im.style.maxHeight = '100%';
+        im.style.objectFit = 'contain';
+        im.style.display = 'block';
+        im.style.background = '#000';
+        videoWrapEl.appendChild(im);
+      }
+    });
+
+    // 如果传来的是数组但都不匹配类型，就隐藏
+    if (!videoWrapEl.children.length) {
+      videoWrapEl.style.display = 'none';
+    }
+  };
+
+  // 具体渲染/隐藏逻辑
+  clearMedia();
+  if (p.video) {
+    renderMedia(p.video);
+    vidCaptionEl.textContent = p.caption || '';
+  } else {
+    if (videoWrapEl) videoWrapEl.style.display = 'none';
+    vidCaptionEl.textContent = p.caption || '右侧答题后继续';
+  }
+
+if (p.id === 'consent') {
+  // consent 页：只显示居中文字
+  videoWrapEl.style.display = 'flex';
+  videoWrapEl.style.flexDirection = 'column';
+  videoWrapEl.style.justifyContent = 'center';
+  videoWrapEl.style.alignItems = 'center';
+  videoWrapEl.innerHTML = `
+    <div style="text-align:center; padding:20px; font-size:18px; line-height:1.6; color:var(--ink);">
+      ${p.caption}
+    </div>
+  `;
+
+  // 隐藏下方 caption 栏
+  document.querySelector('.caption').style.display = 'none';
+
 }
 
-
-  // 右侧内容
+  // ========== 右侧内容渲染（保持你的原逻辑） ==========
   content.innerHTML = '';
-  if(p.type === 'intro' || p.type === 'finish'){
-    (p.blocks||[]).forEach(b=>{
-      if(b.kind==='html'){
-        const d=document.createElement('div'); d.innerHTML=b.html; content.appendChild(d);
-      } else if(b.kind==='checkbox'){
+  if (p.type === 'intro' || p.type === 'finish') {
+    (p.blocks || []).forEach(b => {
+      if (b.kind === 'html') {
+        const d = document.createElement('div');
+        d.innerHTML = b.html;
+        content.appendChild(d);
+      } else if (b.kind === 'checkbox') {
         content.appendChild(renderCheckbox(b));
-      } else if(b.kind==='text'){
+      } else if (b.kind === 'text') {
         content.appendChild(renderText(b));
       }
     });
-  } else if(p.type === 'video+qs' || p.type === 'questions'){
-    (p.questions||[]).forEach(q=> content.appendChild(renderQuestion(q)) );
+  } else if (p.type === 'video+qs' || p.type === 'questions') {
+    (p.questions || []).forEach(q => content.appendChild(renderQuestion(q)));
   }
 
-  btnBack.style.visibility = STATE.page===0? 'hidden':'visible';
-  btnNext.textContent = STATE.page === PAGES.length-1 ? '完成' : '下一步';
+  // ========== 底部按钮 ==========
+  btnBack.style.visibility = STATE.page === 0 ? 'hidden' : 'visible';
+  btnNext.textContent = STATE.page === PAGES.length - 1 ? '完成' : '下一步';
+  // 在 render() 里渲染完媒体后调用：
+fitMediaHeights(videoWrapEl);
+}
+
+function fitMediaHeights(wrap){
+  if(!wrap) return;
+  const items = Array.from(wrap.children).filter(el =>
+    el.tagName === 'IMG' || el.tagName === 'VIDEO'
+  );
+  const n = items.length;
+  if(n === 0) return;
+
+  const GAP = 12;                            // 和 .videoWrap 的 gap 保持一致
+  const wrapStyles = getComputedStyle(wrap);
+  const py = parseFloat(wrapStyles.paddingTop) + parseFloat(wrapStyles.paddingBottom);
+  const wrapH = wrap.clientHeight - py;      // 可用高度
+  const maxH = Math.floor((wrapH - GAP*(n-1)) / n);
+
+  items.forEach(el => {
+    el.style.maxHeight = maxH > 0 ? `${maxH}px` : '';
+    // 宽度策略与 CSS 一致
+    el.style.width = 'min(720px, 100%)';
+    el.style.maxWidth = '100%';
+    el.style.objectFit = 'contain';
+  });
 }
 
 function renderQuestion(q){
