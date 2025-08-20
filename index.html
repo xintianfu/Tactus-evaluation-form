@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>乐谱练习系统 评价问卷（单人访谈版）</title>
+  <title>Music Score Practice System — Evaluation Questionnaire (1:1 Interview)</title>
   <style>
     :root{
       --bg:#0f1115;--panel:#171923;--ink:#e6e8ef;--muted:#aab0c0;--brand:#714800;--ok:#2ecc71;--warn:#f39c12
@@ -41,257 +41,247 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media (max-width:700px){.grid2{grid-template-columns:1fr}}
     .videoWrap {
-display: flex;
-justify-content: center;
-align-items: center;
-height: 100%;
-overflow: hidden;
-}
-
-
-.videoWrap video{
-width: 720px; /* 固定宽度，可根据需要调整 */
-height: auto; /* 保持竖屏比例 */
-max-height: 100%; /* 不超过容器高度 */
-object-fit: contain;
-}
-.videoWrap img{
-  width: 720px;      /* 和你的视频宽度策略一致 */
-  height: auto;
-  max-height: 100%;
-  object-fit: contain;
-  display: block;
-  background: #FCF7F4 !important;
-  border-radius: 0;  /* 按需 */
-}
-
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      overflow: hidden;
+    }
+    .videoWrap video{
+      width: 720px;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .videoWrap img{
+      width: 720px;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #FCF7F4 !important;
+      border-radius: 0;
+    }
   </style>
 </head>
 <body>
 <div class="app">
-  <!-- 左侧：视频区域 -->
+  <!-- Left: media area -->
   <section class="left">
     <div class="videoWrap">
       <video id="vid" controls preload="metadata" poster="" src=""
        playsinline webkit-playsinline x5-playsinline
        controlslist="nodownload noplaybackrate">
-        您的浏览器不支持 video 标签。
+        Your browser does not support the video tag.
       </video>
-          <!-- 新增：图片占位 -->
+      <!-- Image placeholder -->
       <img id="pic" alt="" style="display:none;" />
     </div>
     <div class="caption">
       <div class="meta">
-        <span class="pill" id="pageTag">概览</span>
-        <span id="vidCaption">请先观看介绍视频，然后在右侧回答问题。</span>
+        <span class="pill" id="pageTag">Overview</span>
+        <span id="vidCaption">Please watch the introduction video first, then answer the questions on the right.</span>
       </div>
     </div>
   </section>
 
-  <!-- 右侧：问卷区域 -->
+  <!-- Right: questionnaire area -->
   <section class="right">
     <div class="head">
-      <div class="title" id="title">乐谱练习系统 评价问卷（单人访谈）</div>
+      <div class="title" id="title">Music Score Practice System — Evaluation Questionnaire (Interview)</div>
     </div>
     <div class="progress"><div class="bar" id="bar"></div></div>
     <div class="content" id="content"></div>
     <div class="footer">
-      <button class="ghost" id="btnBack">上一步</button>
-      <button class="primary" id="btnNext">下一步</button>
+      <button class="ghost" id="btnBack">Back</button>
+      <button class="primary" id="btnNext">Next</button>
     </div>
   </section>
 </div>
 
 <script>
-// ======== 配置：页面流与题目 ========
-// 约定：page.type 可为 'intro' | 'video+qs' | 'questions' | 'finish'
-// 题型：likert7 / yesno / checkbox / text / textarea
+// ======== Pages & Questions ========
 const PAGES = [
   {
     id: 'consent', type: 'intro',
-    title: '开始之前', tag: '说明',
-    caption: '本研究为一对一访谈 + 问卷。请如实作答，答案仅用于学术研究。',
+    title: 'Before We Start', tag: 'Consent',
+    caption: 'This study includes a 1:1 interview plus a questionnaire. We kindly ask you to answer as sincerely as possible; your responses will be used only for academic research.',
     blocks: [
-      { kind:'html', html:`<div class="notice">流程：概览视频 → 功能逐一演示 → 可视化理解度。右侧问题均为必答项（除开放题）。</div>`},
-      { kind:'checkbox', id:'consent', label:'我已阅读研究说明，并同意参与本次研究', options:[{value:'yes',label:'同意'}], required:false },
-      { kind:'text', id:'pid', label:'参与者编号（由研究者填写，可留空）', placeholder:'例如 P07',required:false }
+      { kind:'html', html:`<div class="notice">Flow: Overview video → Feature-by-feature demonstration → Comprehension of visualizations. All questions on the right are required (except open-ended ones).</div>`},
+      { kind:'checkbox', id:'consent', label:'I have read the study information and agree to participate in this research.', options:[{value:'yes',label:'Agree'}], required:true },
+      { kind:'text', id:'pid', label:'Participant ID (filled by the researcher; may be left blank)', placeholder:'e.g., P07', required:true }
     ]
   },
 
-  // A. 概览视频 + 系统目标与五大功能 & 训练模式、练习方式
+  // A. Overview
   {
-    id:'overview', type:'video+qs', tag:'概览',
-    title:'总览介绍：系统目标与手势触发',
-    video:'1.mp4',
-    caption:'展示系统目标、五个核心功能与对应手势：clef / sharp / circle / 两条竖线 / circle+竖线（演奏）。',
+    id:'overview', type:'video+qs', tag:'Overview',
+    title:'Overview: System Goals & Gesture Triggers',
+    video:'11.mp4',
+    caption:'Shows system goals, five core functions, and corresponding gestures: clef / sharp / circle / two vertical lines / circle + vertical line (perform).',
     questions:[
-      { id:'useful_system', label:'你觉得这样的系统对你有用吗？', type:'likert7', required:false },
-      { id:'intend_use', label:'你愿意在日常练习中使用它吗？', type:'likert7', required:false },
-      { id:'useful_functions', label:'请评价下列 5 个核心功能的有用性（1=非常没用，7=非常有用）', type:'group', items:[
-          { id:'func_clef', label:'（1）明确表示变音记号', type:'likert7', required:false },
-          { id:'func_annot', label:'（2）标注/自定义标注', type:'likert7', required:false },
-          { id:'func_pitch', label:'（3）音高练习（用“唱出旋律”的方式练习音高的方法）', type:'likert7', required:false },
-          { id:'func_rhythm', label:'（4）节奏练习（根据节拍器与乐谱“敲击屏幕”练节奏的方法）', type:'likert7', required:false },
-          { id:'func_perform', label:'（5）演奏练习（“录制演奏音频”来同时练习音高和节奏的方法）', type:'likert7', required:false }
+      { id:'useful_system', label:'Do you think this system would be useful for you?', type:'likert7', required:true },
+      { id:'intend_use', label:'Would you be willing to use it in your daily practice?', type:'likert7', required:true },
+      { id:'useful_functions', label:'Please rate the usefulness of the five core features (1 = Not useful at all, 7 = Very useful).', type:'group', items:[
+          { id:'func_clef',   label:'(1) Reveal all accidentals', type:'likert7', required:true },
+          { id:'func_annot',  label:'(2) Add annotation', type:'likert7', required:true },
+          { id:'func_pitch',  label:'(3) Pitch practice (singing the melody to train pitch)', type:'likert7', required:true },
+          { id:'func_rhythm', label:'(4) Rhythm practice (tapping with a metronome and the score)', type:'likert7', required:true },
+          { id:'func_perform',label:'(5) Performance practice (record audio to train pitch + rhythm together)', type:'likert7', required:true }
       ]},
-      { id:'train_mode', label:'你是否觉得选择一个特定片段（section/full），进入特定模式练习并获得可视化反馈是你想做的事？', type:'likert7', required:false }
+      { id:'train_mode', label:'Do you feel selecting a specific segment (section/full), entering a specific mode, and receiving visual feedback is something you want to do?', type:'likert7', required:true }
     ]
   },
 
-  // B. 手势可理解性与可执行性（分两页避免负担）
+  // B. Gestures
   {
-    id:'gestures1', type:'video+qs', tag:'手势-1',
-    title:'一、手势理解度（上）',
-    video:'1.mp4',
-    caption:'演示 clef / sharp / circle / 两条竖线 / circle+两条竖线 的触发与对应功能。',
+    id:'gestures1', type:'video+qs', tag:'Gestures-1',
+    title:'I. Gesture Comprehension (Part 1)',
+    video:'11.mp4',
+    caption:'Demonstrates the triggers and corresponding functions for clef / sharp / circle / two vertical lines / circle + two vertical lines.',
     questions:[
-      // 对每个手势：好/自然/直观/易执行/易学习
-      { id:'g_clef_easy', label:'针对触发变音记号显示的 clef 手势是否容易执行与学习？', type:'likert7', required:false },
-
-      { id:'g_sharp_easy', label:'针对触发标记功能的 sharp 手势是否容易执行与学习？', type:'likert7', required:false },
-
-      { id:'g_circle_easy', label:'针对触发音高练习模式的 circle 手势是否容易执行与学习？', type:'likert7', required:false },
-
-      { id:'g_vlines_easy', label:'针对触发节奏练习模式的两条竖线手势是否容易执行与学习？', type:'likert7', required:false },
-
-      { id:'g_play_easy', label:'针对触发演奏练习模式的 circle和两条竖线手势是否容易执行与学习？', type:'likert7', required:false }
+      { id:'g_clef_easy',   label:'For the gesture that triggers displaying accidentals (clef), is it easy to perform and learn?', type:'likert7', required:true },
+      { id:'g_sharp_easy',  label:'For the gesture that triggers annotation (sharp), is it easy to perform and learn?', type:'likert7', required:true },
+      { id:'g_circle_easy', label:'For the gesture that triggers pitch practice (circle), is it easy to perform and learn?', type:'likert7', required:true },
+      { id:'g_vlines_easy', label:'For the gesture that triggers rhythm practice (two vertical lines), is it easy to perform and learn?', type:'likert7', required:true },
+      { id:'g_play_easy',   label:'For the gesture that triggers performance mode (circle + two vertical lines), is it easy to perform and learn?', type:'likert7', required:true }
     ]
   },
   {
-    id:'gestures2', type:'video+qs', tag:'手势-2',
-    title:'一、手势理解度（下）',
-    video:'1.mp4',
-    caption:'演示“演奏模式”中 circle/竖线 用于展开具体音高/节奏可视化。',
+    id:'gestures2', type:'video+qs', tag:'Gestures-2',
+    title:'I. Gesture Comprehension (Part 2)',
+    video:'11.mp4',
+    caption:'In performance mode, circle / vertical lines are used to expand detailed pitch/rhythm visualizations.',
     questions:[
-      { id:'g_perf_circle_pitch', label:'演奏模式中，用 circle 显示具体“音高错误可视化”是个好方式。', type:'likert7', required:false },
-      { id:'g_perf_vlines_rhy', label:'演奏模式中，用两条竖线显示具体“节奏错误可视化”是个好方式。', type:'likert7', required:false }
+      { id:'g_perf_circle_pitch', label:'In performance mode, using circle to show detailed “pitch error” visualization is a good approach.', type:'likert7', required:true },
+      { id:'g_perf_vlines_rhy',   label:'In performance mode, using two vertical lines to show detailed “rhythm error” visualization is a good approach.', type:'likert7', required:true }
     ]
   },
 
-  // C1. 音高可视化
+  // C1. Pitch visualization
   {
-    id:'viz_pitch', type:'video+qs', tag:'可视化-音高',
-    title:'二、可视化：音高错误',
+    id:'viz_pitch', type:'video+qs', tag:'Viz-Pitch',
+    title:'II. Visualization: Pitch Errors',
     video:'2pitch.mp4',
-    caption:'展示两类音高错误（太高/太低；大/小错误），以及颜色和符号/图片。',
+    caption:'Shows two types of pitch errors roughly(too high / too low), and the use of colors and symbols.',
     questions:[
-      { id:'vp_is_pitch', label:'这些标记是否清楚地表示“音高”？', type:'likert7', required:false },
-      { id:'vp_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
-      { id:'vp_kind', label:'你能分辨“太高/太低”以及大概的错误大小吗？', type:'likert7', required:false },
-      { id:'vp_readable', label:'整体是否可读/看清？', type:'likert7', required:false },
-      { id:'vp_sep_or_together', label:'分别练音高与节奏是否更有意义（相对同时练）？（1=完全不同意，7=完全同意）', type:'likert7', required:false },
-      { id:'vp_open', label:'补充意见（音高可视化）', type:'textarea', placeholder:'任何你注意到的优缺点、建议', required:false }
+      { id:'vp_is_pitch',        label:'Do these marks clearly indicate “pitch”?', type:'likert7', required:true },
+      { id:'vp_where_wrong',     label:'Can you locate where the error occurs?', type:'likert7', required:true },
+      { id:'vp_kind',            label:'Can you distinguish “too high / too low” and roughly the magnitude of the error?', type:'likert7', required:true },
+      { id:'vp_readable',        label:'Is it readable / easy to see overall?', type:'likert7', required:true },
+      { id:'vp_open',            label:'Additional comments (Pitch visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
     ]
   },
 
-  // C2. 节奏可视化1
+  // C2. Rhythm visualization
   {
-    id:'viz_rhythm1', type:'video+qs', tag:'可视化-节奏',
-    title:'二、可视化：节奏错误1',
+    id:'viz_rhythm1', type:'video+qs', tag:'Viz-Rhythm',
+    title:'II. Visualization: Rhythm Errors (1)',
     video:'3rhythm.mp4',
-    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+    caption:'Shows two types of rhythm errors (too fast / too slow) as well as colors and symbols.',
     questions:[
-      { id:'vr_is_rhy', label:'这些标记是否清楚地表示“节奏”？', type:'likert7', required:false },
-      { id:'vr_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
-      { id:'vr_kind', label:'你能分辨“太快/太慢”以及大概的误差量吗？', type:'likert7', required:false },
-      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false }
+      { id:'vr_is_rhy',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
+      { id:'vr_where_wrong',label:'Can you locate where the error occurs?', type:'likert7', required:true },
+      { id:'vr_kind',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
+      { id:'vr_readable',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
     ]
   },
   {
-    id:'viz_rhythm2', type:'video+qs', tag:'可视化-节奏',
-    title:'二、可视化：节奏错误2',
-    video:'rhythm2.png',
-    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+    id:'viz_rhythm2', type:'video+qs', tag:'Viz-Rhythm',
+    title:'II. Visualization: Rhythm Errors (2)',
+    video:'2.png',
+    caption:'Shows another rhythm errors viz with different logic.',
     questions:[
-      { id:'vr_is_rhy', label:'这些标记是否清楚地表示“节奏”？', type:'likert7', required:false },
-      { id:'vr_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
-      { id:'vr_kind', label:'你能分辨“太快/太慢”以及大概的误差量吗？', type:'likert7', required:false },
-      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false }
+      { id:'vr_is_rhy',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
+      { id:'vr_where_wrong',label:'Can you locate where the error occurs?', type:'likert7', required:true },
+      { id:'vr_kind',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
+      { id:'vr_readable',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
     ]
   },
-    {
-    id:'viz_rhythm3', type:'video+qs', tag:'可视化-节奏',
-    title:'二、可视化：节奏错误比较',
-    video:['rhythm1.png','rhythm2.png'],
-    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+  {
+    id:'viz_rhythm3', type:'video+qs', tag:'Viz-Rhythm',
+    title:'II. Visualization: Comparing Rhythm Error Visualizations',
+    video:['1.png','2.png'],
+    caption:'Compare two rhythm error visualizations',
     questions:[
-      { id:'vr_is_rhy', label:'这两种节奏错误的可视化，哪一个更加的容易理解？', type:'likert7', required:false },
-      { id:'vr_open', label:'补充意见（节奏可视化）', type:'textarea', placeholder:'任何你注意到的优缺点、建议', required:false }
+      { id:'vr_is_rhy', label:'Between these two rhythm visualizations, which one is easier to understand?', type:'likert7', required:true },
+      { id:'vr_open',   label:'Additional comments (Rhythm visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
     ]
   },
 
-  // C3. 组合可视化（演奏模式）
+  // C3. Combined visualization (performance mode)
   {
-    id:'viz_combo_rough', type:'video+qs', tag:'可视化-组合',
-    title:'二、可视化：组合（音高 + 节奏）',
-    video:'4combine.mp4',
-    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    id:'viz_combo_rough', type:'video+qs', tag:'Viz-Combined',
+    title:'II. Visualization: Combined (Pitch + Rhythm)',
+    video:'4combine1.mp4',
+    caption:'Performance mode: pitch and rhythm errors appear together.',
     questions:[
-      { id:'combine_pitch_rough', label:'请评价音高可视化', type:'group', items:[
-          { id:'vc_pitch_localize', label:'你能理解“音高”哪里错了吗？', type:'likert7', required:false },
-          { id:'vc_pitch_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
-          { id:'vc_pitch_readable', label:'音高的图片/符号是否可读/看清？', type:'likert7', required:false }
+      { id:'combine_pitch_rough', label:'Please rate the pitch visualization', type:'group', items:[
+          { id:'vc_pitch_localize', label:'Can you understand where the pitch went wrong?', type:'likert7', required:true },
+          { id:'vc_pitch_kind',     label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
+          { id:'vc_pitch_readable', label:'Are the icons/images for pitch readable / clear?', type:'likert7', required:true }
       ]},
-      { id:'combine_rhythm_rough', label:'请评价节奏可视化', type:'group', items:[
-          { id:'vc_rhythm_localize', label:'你能理解“节奏”哪里错了吗？', type:'likert7', required:false },
-          { id:'vc_rhythm_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
-          { id:'vc_rhythm_readable', label:'节奏的图片/符号是否可读/看清？', type:'likert7', required:false }
+      { id:'combine_rhythm_rough', label:'Please rate the rhythm visualization', type:'group', items:[
+          { id:'vc_rhythm_localize', label:'Can you understand where the rhythm went wrong?', type:'likert7', required:true },
+          { id:'vc_rhythm_kind',     label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
+          { id:'vc_rhythm_readable', label:'Are the icons/images for rhythm readable / clear?', type:'likert7', required:true }
       ]},
-      { id:'combine_pitch_rhythm_rough', label:'请评价音高节奏同时的可视化', type:'group', items:[
-          { id:'vc_pr', label:'这时候出现的三角形你能理解这是什么意思吗？', type:'likert7', required:false },
-          { id:'vc_p_localize', label:'你能理解“音高”哪里错了吗？', type:'likert7', required:false },
-          { id:'vc_p_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
-          { id:'vc_p_readable', label:'音高的图片/符号是否可读/看清？', type:'likert7', required:false },
-          { id:'vc_r_localize', label:'你能理解“节奏”哪里错了吗？', type:'likert7', required:false },
-          { id:'vc_r_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
-          { id:'vc_r_readable', label:'节奏的图片/符号是否可读/看清？', type:'likert7', required:false }
+      { id:'combine_pitch_rhythm_rough', label:'Please rate the combined visualization (pitch + rhythm)', type:'group', items:[
+          { id:'vc_pr',            label:'Can you understand the meaning of the triangle that appears here?', type:'likert7', required:true },
+          { id:'vc_p_localize',    label:'Can you understand where the pitch went wrong?', type:'likert7', required:true },
+          { id:'vc_p_kind',        label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
+          { id:'vc_p_readable',    label:'Are pitch icons/images readable / clear?', type:'likert7', required:true },
+          { id:'vc_r_localize',    label:'Can you understand where the rhythm went wrong?', type:'likert7', required:true },
+          { id:'vc_r_kind',        label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
+          { id:'vc_r_readable',    label:'Are rhythm icons/images readable / clear?', type:'likert7', required:true }
       ]}
     ]
   },
   {
-    id:'viz_combo_p', type:'video+qs', tag:'可视化-组合',
-    title:'二、可视化：组合——具体音高错误可视化',
-    video:'4combine.mp4',
-    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    id:'viz_combo_p', type:'video+qs', tag:'Viz-Combined',
+    title:'II. Visualization: Combined — Detailed Pitch Errors',
+    video:'4combine2.mp4',
+    caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
     questions:[
-      { id:'vc_pitch_localize', label:'现在你能理解“音高”具体哪里错了吗？', type:'likert7', required:false },
-      { id:'vc_pitch_kind', label:'你能分辨“太高/太低”以及具体偏差多少吗？', type:'likert7', required:false },
-      { id:'vc_pitch_readable', label:'具体音高可视化的图片/符号是否可读/看清？', type:'likert7', required:false },
-      { id:'vc_rhy_localize', label:'这个时候的节奏错误可视化在矩形顶上，你能理解你在哪些地方犯了节奏的错？', type:'likert7', required:false },
-      { id:'vc_rhy_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
-      { id:'vc_rhy_readable', label:'顶部的节奏可视化是否可读/看清？', type:'likert7', required:false },
-      { id:'vc_anim_pitch', label:'点击图片后出现的“音符头移动动画”是否清晰表达了音高错误？', type:'likert7', required:false },
-      { id:'vc_anim_meter', label:'点击量表符号后出现的“细微音差图片”是否清晰表达了错误？', type:'likert7', required:false },
+      { id:'vc_pitch_localize', label:'Now can you understand exactly where the pitch went wrong?', type:'likert7', required:true },
+      { id:'vc_pitch_kind',     label:'Can you tell “too high / too low” and the specific amount of deviation?', type:'likert7', required:true },
+      { id:'vc_pitch_readable', label:'Are the detailed pitch icons/images readable / clear?', type:'likert7', required:true },
+      { id:'vc_rhy_localize',   label:'At this time, rhythm error visualization is at the top of the rectangle. Can you understand where rhythm errors occur?', type:'likert7', required:true },
+      { id:'vc_rhy_kind',       label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
+      { id:'vc_rhy_readable',   label:'Is the top rhythm visualization readable / clear?', type:'likert7', required:true },
+      { id:'vc_anim_pitch',     label:'Does the “note head movement” animation after clicking clearly express pitch errors?', type:'likert7', required:true },
+      { id:'vc_anim_meter',     label:'Does the “fine pitch deviation graphic” after clicking the gauge icon clearly express the error?', type:'likert7', required:true }
     ]
   },
   {
-    id:'viz_combo_r', type:'video+qs', tag:'可视化-组合',
-    title:'二、可视化：组合——具体节奏错误可视化',
-    video:'4combine.mp4',
-    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    id:'viz_combo_r', type:'video+qs', tag:'Viz-Combined',
+    title:'II. Visualization: Combined — Detailed Rhythm Errors',
+    video:'4combine3.mp4',
+    caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
     questions:[
-      { id:'vc_pitch_localize', label:'现在你能理解“节奏”具体哪里错了吗？', type:'likert7', required:false },
-      { id:'vc_pitch_kind', label:'你能分辨“太快/太慢”以及具体偏差多少吗？', type:'likert7', required:false },
-      { id:'vc_pitch_readable', label:'节奏的斜线是否可读/看清？', type:'likert7', required:false },
-      { id:'vc_rhy_localize', label:'这个时候的音高错误可视化在矩形顶上，你能理解你在哪些地方犯了音高的错？', type:'likert7', required:false },
-      { id:'vc_rhy_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
-      { id:'vc_rhy_readable', label:'顶部的音高可视化是否可读/看清？', type:'likert7', required:false },
-      { id:'vc_anim_rhy', label:'点击斜线后出现的“斜线旋转 + 音符头水平移动动画”能否清晰表达节奏错误？', type:'likert7', required:false },
-      { id:'vc_sep_or_together', label:'分别关注音高和节奏 vs. 一起关注：你更偏好“分别”？（1=完全不同意，7=完全同意）', type:'likert7', required:false },
-      { id:'vc_open', label:'补充意见（组合可视化）', type:'textarea', placeholder:'对组合可视化/交互的想法', required:false }
+      { id:'vc_pitch_localize', label:'Now can you understand exactly where the rhythm went wrong?', type:'likert7', required:true },
+      { id:'vc_pitch_kind',     label:'Can you tell “too fast / too slow” and the specific amount of deviation?', type:'likert7', required:true },
+      { id:'vc_pitch_readable', label:'Are the slanted rhythm lines readable / clear?', type:'likert7', required:true },
+      { id:'vc_rhy_localize',   label:'At this time, pitch error visualization is at the top of the rectangle. Can you understand where pitch errors occur?', type:'likert7', required:true },
+      { id:'vc_rhy_kind',       label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
+      { id:'vc_rhy_readable',   label:'Is the top pitch visualization readable / clear?', type:'likert7', required:true },
+      { id:'vc_anim_rhy',       label:'After clicking the slanted line, does the “line rotation + horizontal note-head movement” animation clearly express rhythm errors?', type:'likert7', required:true },
+      { id:'vc_sep_or_together',label:'Focusing separately on pitch and rhythm vs. both together: do you prefer handling them separately? (1 = Strongly disagree, 7 = Strongly agree)', type:'likert7', required:true },
+      { id:'vc_open',           label:'Additional comments (Combined visualization / interaction)', type:'textarea', placeholder:'Any thoughts on the combined visuals or interactions', required:false }
     ]
   },
 
-  // 结束页：导出
-  { id:'finish', type:'finish', tag:'完成', title:'完成与导出',
+  // Finish
+  {
+    id:'finish', type:'finish', tag:'Finish', title:'Finish & Export',
     blocks:[
-      { kind:'html', html:`<p>感谢你的参与！点击“导出结果”为 JSON 文件，研究者可同时做录音转写。</p>` },
-      { kind:'html', html:`<div class="grid2"><button id="btnExport" class="primary">导出 JSON</button><button id="btnReset" class="ghost">清空数据重新开始</button></div>` }
+      { kind:'html', html:`<p>Thank you for your participation! Click “Export Results” to save a JSON file.</p>` },
+      { kind:'html', html:`<div class="grid2"><button id="btnExport" class="primary">Export JSON</button><button id="btnReset" class="ghost">Clear Data & Restart</button></div>` }
     ]
   }
 ];
 
-// ======== 渲染与状态管理 ========
+// ======== Render & State ========
 const content = document.getElementById('content');
 const titleEl = document.getElementById('title');
 const tagEl = document.getElementById('pageTag');
@@ -309,33 +299,27 @@ function save(){ localStorage.setItem('eval_state_v1', JSON.stringify(STATE)); }
 function pct(n){ return Math.round((n)/(PAGES.length-1)*100); }
 
 function render(){
-  // ========== 顶部标题 & 进度 ==========
+  // Header & progress
   const p = PAGES[STATE.page];
   titleEl.textContent = p.title;
   tagEl.textContent = p.tag || '';
   bar.style.width = Math.round((STATE.page)/(PAGES.length-1)*100) + '%';
 
-  // ========== 左侧媒体区域（支持视频/图片/数组） ==========
+  // Media area
   const videoWrapEl = document.querySelector('.videoWrap');
   const vidCaptionEl = vidCaption;
 
-  // 工具：判断扩展名
   const isVideoPath = (path) => /\.(mp4|webm|ogg)(\?.*)?$/i.test(path || '');
   const isImagePath = (path) => /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(path || '');
 
-  // 清空并停止已有视频
   const clearMedia = () => {
     if (!videoWrapEl) return;
-    // 尝试暂停容器里可能存在的所有 video
     videoWrapEl.querySelectorAll('video').forEach(v => { try { v.pause(); } catch(e){} });
     videoWrapEl.innerHTML = '';
   };
 
-  // 根据 p.video 渲染媒体
   const renderMedia = (media) => {
     if (!videoWrapEl) return;
-
-    // 显示容器并设置为“上下堆叠”
     videoWrapEl.style.display = 'flex';
     videoWrapEl.style.flexDirection = 'column';
     videoWrapEl.style.alignItems = 'center';
@@ -354,7 +338,6 @@ function render(){
         v.setAttribute('x5-playsinline', '');
         v.setAttribute('controlslist', 'nodownload noplaybackrate');
         v.src = src;
-        // 尺寸策略：与你现有的 video 一致
         v.style.width = '720px';
         v.style.maxWidth = '100%';
         v.style.display = 'block';
@@ -363,8 +346,7 @@ function render(){
       } else if (isImagePath(src)) {
         const im = document.createElement('img');
         im.src = src;
-        im.alt = p.title || '图片';
-        // 与视频一致的显示策略
+        im.alt = p.title || 'image';
         im.style.width = '720px';
         im.style.maxWidth = '100%';
         im.style.height = 'auto';
@@ -376,40 +358,37 @@ function render(){
       }
     });
 
-    // 如果传来的是数组但都不匹配类型，就隐藏
     if (!videoWrapEl.children.length) {
       videoWrapEl.style.display = 'none';
     }
   };
 
-  // 具体渲染/隐藏逻辑
   clearMedia();
   if (p.video) {
     renderMedia(p.video);
     vidCaptionEl.textContent = p.caption || '';
   } else {
     if (videoWrapEl) videoWrapEl.style.display = 'none';
-    vidCaptionEl.textContent = p.caption || '右侧答题后继续';
+    vidCaptionEl.textContent = p.caption || 'Proceed after answering on the right.';
   }
 
-if (p.id === 'consent') {
-  // consent 页：只显示居中文字
-  videoWrapEl.style.display = 'flex';
-  videoWrapEl.style.flexDirection = 'column';
-  videoWrapEl.style.justifyContent = 'center';
-  videoWrapEl.style.alignItems = 'center';
-  videoWrapEl.innerHTML = `
-    <div style="text-align:center; padding:20px; font-size:18px; line-height:1.6; color:var(--ink);">
-      ${p.caption}
-    </div>
-  `;
+  if (p.id === 'consent') {
+    // Consent page: show centered text only
+    videoWrapEl.style.display = 'flex';
+    videoWrapEl.style.flexDirection = 'column';
+    videoWrapEl.style.justifyContent = 'center';
+    videoWrapEl.style.alignItems = 'center';
+    videoWrapEl.innerHTML = `
+      <div style="text-align:center; padding:20px; font-size:18px; line-height:1.6; color:var(--ink);">
+        ${p.caption}
+      </div>
+    `;
+    document.querySelector('.caption').style.display = 'none';
+  } else {
+    document.querySelector('.caption').style.display = '';
+  }
 
-  // 隐藏下方 caption 栏
-  document.querySelector('.caption').style.display = 'none';
-
-}
-
-  // ========== 右侧内容渲染（保持你的原逻辑） ==========
+  // Right side
   content.innerHTML = '';
   if (p.type === 'intro' || p.type === 'finish') {
     (p.blocks || []).forEach(b => {
@@ -427,11 +406,16 @@ if (p.id === 'consent') {
     (p.questions || []).forEach(q => content.appendChild(renderQuestion(q)));
   }
 
-  // ========== 底部按钮 ==========
+  // Footer buttons
   btnBack.style.visibility = STATE.page === 0 ? 'hidden' : 'visible';
-  btnNext.textContent = STATE.page === PAGES.length - 1 ? '完成' : '下一步';
-  // 在 render() 里渲染完媒体后调用：
-fitMediaHeights(videoWrapEl);
+  if (p.type === 'finish') {
+    btnNext.style.display = 'none';   // hide "Next/Finish" on last page
+  } else {
+    btnNext.style.display = 'inline-block';
+    btnNext.textContent = STATE.page === PAGES.length - 1 ? 'Finish' : 'Next';
+  }
+
+  fitMediaHeights(videoWrapEl);
 }
 
 function fitMediaHeights(wrap){
@@ -442,15 +426,14 @@ function fitMediaHeights(wrap){
   const n = items.length;
   if(n === 0) return;
 
-  const GAP = 12;                            // 和 .videoWrap 的 gap 保持一致
+  const GAP = 12;
   const wrapStyles = getComputedStyle(wrap);
   const py = parseFloat(wrapStyles.paddingTop) + parseFloat(wrapStyles.paddingBottom);
-  const wrapH = wrap.clientHeight - py;      // 可用高度
+  const wrapH = wrap.clientHeight - py;
   const maxH = Math.floor((wrapH - GAP*(n-1)) / n);
 
   items.forEach(el => {
     el.style.maxHeight = maxH > 0 ? `${maxH}px` : '';
-    // 宽度策略与 CSS 一致
     el.style.width = 'min(720px, 100%)';
     el.style.maxWidth = '100%';
     el.style.objectFit = 'contain';
@@ -469,9 +452,9 @@ function renderQuestion(q){
   const ans = STATE.answers[q.id];
   if(q.type==='likert7'){
     node.appendChild(renderLikert(q.id, ans));
-    node.appendChild(hint('1=非常不同意 … 7=非常同意'));
+    node.appendChild(hint('1 = Strongly disagree … 7 = Strongly agree'));
   } else if(q.type==='yesno'){
-    node.appendChild(renderOpts(q.id,[{v:'yes',t:'是'},{v:'no',t:'否'}], ans));
+    node.appendChild(renderOpts(q.id,[{v:'yes',t:'Yes'},{v:'no',t:'No'}], ans));
   } else if(q.type==='checkbox'){
     node.appendChild(renderChecks(q.id, q.options||[], ans));
   } else if(q.type==='text'){
@@ -529,7 +512,6 @@ function renderText(cfg){
   wrap.appendChild(inp); return wrap;
 }
 
-// 新增：单选勾选（用于“同意参与”）
 function renderCheckbox(cfg){
   const wrap=document.createElement('div'); wrap.className='q';
   const lab=document.createElement('label'); lab.style.display='flex'; lab.style.alignItems='center'; lab.style.gap='10px';
@@ -538,11 +520,10 @@ function renderCheckbox(cfg){
   const isChecked=Array.isArray(current) ? current.includes('yes') : current===true;
   inp.checked = !!isChecked;
   inp.onchange=()=>{
-    // 统一存成数组 ['yes'] / []
     STATE.answers[cfg.id] = inp.checked ? ['yes'] : [];
     save();
   };
-  const text=document.createTextNode(cfg.label || (cfg.options?.[0]?.label || '我同意'));
+  const text=document.createTextNode(cfg.label || (cfg.options?.[0]?.label || 'I agree'));
   lab.appendChild(inp); lab.appendChild(text);
   wrap.appendChild(lab);
   return wrap;
@@ -550,7 +531,6 @@ function renderCheckbox(cfg){
 function hint(t){ const s=document.createElement('div'); s.className='hint'; s.textContent=t; return s; }
 
 function validate(){
-  // 简单校验必答：当前页所有 required 项必须有答案
   const p=PAGES[STATE.page];
   const ids=[];
   if(p.type==='video+qs' || p.type==='questions'){
@@ -572,7 +552,7 @@ function validate(){
 
 btnNext.addEventListener('click',()=>{
   if(STATE.page < PAGES.length-1){
-    if(!validate()) { alert('请先完成本页必答题'); return; }
+    if(!validate()) { alert('Please complete the required questions on this page first.'); return; }
     STATE.page++; save(); render();
   }
 });
@@ -585,7 +565,9 @@ content.addEventListener('click', (e)=>{
     const a=document.createElement('a'); a.href=url; a.download=(STATE.answers.pid||'eval')+'.json'; a.click(); URL.revokeObjectURL(url);
   }
   if(e.target && e.target.id==='btnReset'){
-    if(confirm('确定清空本地数据并回到起始页？')){ localStorage.removeItem('eval_state_v1'); STATE={page:0,answers:{}}; render(); }
+    if(confirm('Clear local data and restart from the first page?')){
+      localStorage.removeItem('eval_state_v1'); STATE={page:0,answers:{}}; render();
+    }
   }
 });
 
