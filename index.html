@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>乐谱练习系统 评价问卷（单人访谈版）</title>
+  <style>
+    :root{
+      --bg:#0f1115;--panel:#171923;--ink:#e6e8ef;--muted:#aab0c0;--brand:#714800;--ok:#2ecc71;--warn:#f39c12
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .app{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;height:100vh;padding:16px;box-sizing:border-box}
+    @media (max-width: 1000px){.app{grid-template-columns:1fr;grid-auto-rows:min-content}}
+    .left,.right{background:var(--panel);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);overflow:hidden;position:relative}
+    .left{display:flex;flex-direction:column}
+    .videoWrap{position:relative;aspect-ratio:16/9;background:#0b0d12;display:grid;place-items:center}
+    video{width:100%;height:100%;object-fit:contain;background:#000}
+    .caption{padding:12px 16px;color:var(--muted);border-top:1px solid rgba(255,255,255,.05)}
+    .right{display:flex;flex-direction:column}
+    .head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
+    .title{font-weight:700}
+    .progress{height:6px;background:#222532;border-radius:999px;margin:0 16px 10px;overflow:hidden}
+    .bar{height:100%;background:var(--brand);width:0}
+    .content{padding:12px 16px 8px;overflow:auto}
+    .q{margin:12px 0;padding:12px 12px 8px;border:1px solid rgba(255,255,255,.06);border-radius:10px}
+    .q h4{margin:0 0 8px;font-size:16px}
+    .likert{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
+    .likert label{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:8px;background:#1b1e29;cursor:pointer;border:1px solid transparent}
+    .likert input{accent-color:var(--brand)}
+    .hint{color:var(--muted);font-size:12px}
+    .opts{display:grid;gap:8px;margin-top:6px}
+    .opts label{display:flex;align-items:center;gap:10px;background:#1b1e29;padding:8px;border-radius:8px}
+    textarea, input[type="text"]{width:100%;box-sizing:border-box;background:#121420;border:1px solid #2a2f40;color:var(--ink);border-radius:10px;padding:10px}
+    .footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid rgba(255,255,255,.05)}
+    button{background:#222532;color:var(--ink);border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:10px;cursor:pointer}
+    .primary{background:var(--brand);border-color:transparent}
+    .ghost{background:transparent}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid rgba(255,255,255,.12);border-radius:999px;color:var(--muted);font-size:12px}
+    .meta{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+    .notice{padding:10px 12px;background:#131624;border-left:4px solid var(--brand);border-radius:8px;color:#d9dbe6}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:700px){.grid2{grid-template-columns:1fr}}
+    .videoWrap {
+display: flex;
+justify-content: center;
+align-items: center;
+height: 100%;
+overflow: hidden;
+}
+
+
+.videoWrap video {
+width: 720px; /* 固定宽度，可根据需要调整 */
+height: auto; /* 保持竖屏比例 */
+max-height: 100%; /* 不超过容器高度 */
+object-fit: contain;
+}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- 左侧：视频区域 -->
+  <section class="left">
+    <div class="videoWrap">
+      <video id="vid" controls preload="metadata" poster="" src=""
+       playsinline webkit-playsinline x5-playsinline
+       controlslist="nodownload noplaybackrate">
+        您的浏览器不支持 video 标签。
+      </video>
+    </div>
+    <div class="caption">
+      <div class="meta">
+        <span class="pill" id="pageTag">概览</span>
+        <span id="vidCaption">请先观看介绍视频，然后在右侧回答问题。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧：问卷区域 -->
+  <section class="right">
+    <div class="head">
+      <div class="title" id="title">乐谱练习系统 评价问卷（单人访谈）</div>
+    </div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="content" id="content"></div>
+    <div class="footer">
+      <button class="ghost" id="btnBack">上一步</button>
+      <button class="primary" id="btnNext">下一步</button>
+    </div>
+  </section>
+</div>
+
+<script>
+// ======== 配置：页面流与题目 ========
+// 约定：page.type 可为 'intro' | 'video+qs' | 'questions' | 'finish'
+// 题型：likert7 / yesno / checkbox / text / textarea
+const PAGES = [
+  {
+    id: 'consent', type: 'intro',
+    title: '开始之前', tag: '说明',
+    caption: '本研究为一对一访谈 + 问卷。请如实作答，答案仅用于学术研究。',
+    blocks: [
+      { kind:'html', html:`<div class="notice">流程：概览视频 → 功能逐一演示 → 可视化理解度。右侧问题均为必答项（除开放题）。</div>`},
+      { kind:'checkbox', id:'consent', label:'我已阅读研究说明，并同意参与本次研究', options:[{value:'yes',label:'同意'}], required:false },
+      { kind:'text', id:'pid', label:'参与者编号（由研究者填写，可留空）', placeholder:'例如 P07',required:false }
+    ]
+  },
+
+  // A. 概览视频 + 系统目标与五大功能 & 训练模式、练习方式
+  {
+    id:'overview', type:'video+qs', tag:'概览',
+    title:'总览介绍：系统目标与手势触发',
+    video:'1.mp4',
+    caption:'展示系统目标、五个核心功能与对应手势：clef / sharp / circle / 两条竖线 / circle+竖线（演奏）。',
+    questions:[
+      { id:'useful_system', label:'你觉得这样的系统对你有用吗？', type:'likert7', required:false },
+      { id:'intend_use', label:'你愿意在日常练习中使用它吗？', type:'likert7', required:false },
+      { id:'useful_functions', label:'请评价下列 5 个核心功能的有用性（1=非常没用，7=非常有用）', type:'group', items:[
+          { id:'func_clef', label:'（1）明确表示变音记号', type:'likert7', required:false },
+          { id:'func_annot', label:'（2）标注/自定义标注', type:'likert7', required:false },
+          { id:'func_pitch', label:'（3）音高练习（用“唱出旋律”的方式练习音高的方法）', type:'likert7', required:false },
+          { id:'func_rhythm', label:'（4）节奏练习（根据节拍器与乐谱“敲击屏幕”练节奏的方法）', type:'likert7', required:false },
+          { id:'func_perform', label:'（5）演奏练习（“录制演奏音频”来同时练习音高和节奏的方法）', type:'likert7', required:false }
+      ]},
+      { id:'train_mode', label:'你是否觉得选择一个特定片段（section/full），进入特定模式练习并获得可视化反馈是你想做的事？', type:'likert7', required:false }
+    ]
+  },
+
+  // B. 手势可理解性与可执行性（分两页避免负担）
+  {
+    id:'gestures1', type:'video+qs', tag:'手势-1',
+    title:'一、手势理解度（上）',
+    video:'1.mp4',
+    caption:'演示 clef / sharp / circle / 两条竖线 / circle+两条竖线 的触发与对应功能。',
+    questions:[
+      // 对每个手势：好/自然/直观/易执行/易学习
+      { id:'g_clef_easy', label:'针对触发变音记号显示的 clef 手势是否容易执行与学习？', type:'likert7', required:false },
+
+      { id:'g_sharp_easy', label:'针对触发标记功能的 sharp 手势是否容易执行与学习？', type:'likert7', required:false },
+
+      { id:'g_circle_easy', label:'针对触发音高练习模式的 circle 手势是否容易执行与学习？', type:'likert7', required:false },
+
+      { id:'g_vlines_easy', label:'针对触发节奏练习模式的两条竖线手势是否容易执行与学习？', type:'likert7', required:false },
+
+      { id:'g_play_easy', label:'针对触发演奏练习模式的 circle和两条竖线手势是否容易执行与学习？', type:'likert7', required:false }
+    ]
+  },
+  {
+    id:'gestures2', type:'video+qs', tag:'手势-2',
+    title:'一、手势理解度（下）',
+    video:'1.mp4',
+    caption:'演示“演奏模式”中 circle/竖线 用于展开具体音高/节奏可视化。',
+    questions:[
+      { id:'g_perf_circle_pitch', label:'演奏模式中，用 circle 显示具体“音高错误可视化”是个好方式。', type:'likert7', required:false },
+      { id:'g_perf_vlines_rhy', label:'演奏模式中，用两条竖线显示具体“节奏错误可视化”是个好方式。', type:'likert7', required:false }
+    ]
+  },
+
+  // C1. 音高可视化
+  {
+    id:'viz_pitch', type:'video+qs', tag:'可视化-音高',
+    title:'二、可视化：音高错误',
+    video:'2pitch.mp4',
+    caption:'展示两类音高错误（太高/太低；大/小错误），以及颜色和符号/图片。',
+    questions:[
+      { id:'vp_is_pitch', label:'这些标记是否清楚地表示“音高”？', type:'likert7', required:false },
+      { id:'vp_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
+      { id:'vp_kind', label:'你能分辨“太高/太低”以及大概的错误大小吗？', type:'likert7', required:false },
+      { id:'vp_readable', label:'整体是否可读/看清？', type:'likert7', required:false },
+      { id:'vp_sep_or_together', label:'分别练音高与节奏是否更有意义（相对同时练）？（1=完全不同意，7=完全同意）', type:'likert7', required:false },
+      { id:'vp_open', label:'补充意见（音高可视化）', type:'textarea', placeholder:'任何你注意到的优缺点、建议', required:false }
+    ]
+  },
+
+  // C2. 节奏可视化
+  {
+    id:'viz_rhythm', type:'video+qs', tag:'可视化-节奏',
+    title:'二、可视化：节奏错误',
+    video:'3rhythm.mp4',
+    caption:'展示两类节奏错误（太快/太慢），以及颜色、斜线、刻度。',
+    questions:[
+      { id:'vr_is_rhy', label:'这些标记是否清楚地表示“节奏”？', type:'likert7', required:false },
+      { id:'vr_where_wrong', label:'你能定位哪里出了错吗？', type:'likert7', required:false },
+      { id:'vr_kind', label:'你能分辨“太快/太慢”以及大概的误差量吗？', type:'likert7', required:false },
+      { id:'vr_readable', label:'整体是否可读/看清？', type:'likert7', required:false },
+      { id:'vr_sep_or_together', label:'分别练节奏与音高是否更有意义（相对同时练）？', type:'likert7', required:false },
+      { id:'vr_open', label:'补充意见（节奏可视化）', type:'textarea', placeholder:'任何你注意到的优缺点、建议', required:false }
+    ]
+  },
+
+  // C3. 组合可视化（演奏模式）
+  {
+    id:'viz_combo_rough', type:'video+qs', tag:'可视化-组合',
+    title:'二、可视化：组合（音高 + 节奏）',
+    video:'4combine.mp4',
+    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    questions:[
+      { id:'combine_pitch_rough', label:'请评价音高可视化', type:'group', items:[
+          { id:'vc_pitch_localize', label:'你能理解“音高”哪里错了吗？', type:'likert7', required:false },
+          { id:'vc_pitch_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
+          { id:'vc_pitch_readable', label:'音高的图片/符号是否可读/看清？', type:'likert7', required:false }
+      ]},
+      { id:'combine_rhythm_rough', label:'请评价节奏可视化', type:'group', items:[
+          { id:'vc_rhythm_localize', label:'你能理解“节奏”哪里错了吗？', type:'likert7', required:false },
+          { id:'vc_rhythm_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
+          { id:'vc_rhythm_readable', label:'节奏的图片/符号是否可读/看清？', type:'likert7', required:false }
+      ]},
+      { id:'combine_pitch_rhythm_rough', label:'请评价音高节奏同时的可视化', type:'group', items:[
+          { id:'vc_pr', label:'这时候出现的三角形你能理解这是什么意思吗？', type:'likert7', required:false },
+          { id:'vc_p_localize', label:'你能理解“音高”哪里错了吗？', type:'likert7', required:false },
+          { id:'vc_p_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
+          { id:'vc_p_readable', label:'音高的图片/符号是否可读/看清？', type:'likert7', required:false },
+          { id:'vc_r_localize', label:'你能理解“节奏”哪里错了吗？', type:'likert7', required:false },
+          { id:'vc_r_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
+          { id:'vc_r_readable', label:'节奏的图片/符号是否可读/看清？', type:'likert7', required:false }
+      ]}
+    ]
+  },
+  {
+    id:'viz_combo_p', type:'video+qs', tag:'可视化-组合',
+    title:'二、可视化：组合——具体音高错误可视化',
+    video:'4combine.mp4',
+    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    questions:[
+      { id:'vc_pitch_localize', label:'现在你能理解“音高”具体哪里错了吗？', type:'likert7', required:false },
+      { id:'vc_pitch_kind', label:'你能分辨“太高/太低”以及具体偏差多少吗？', type:'likert7', required:false },
+      { id:'vc_pitch_readable', label:'具体音高可视化的图片/符号是否可读/看清？', type:'likert7', required:false },
+      { id:'vc_rhy_localize', label:'这个时候的节奏错误可视化在矩形顶上，你能理解你在哪些地方犯了节奏的错？', type:'likert7', required:false },
+      { id:'vc_rhy_kind', label:'你能分辨“太快/太慢”以及大概偏差多少吗？', type:'likert7', required:false },
+      { id:'vc_rhy_readable', label:'顶部的节奏可视化是否可读/看清？', type:'likert7', required:false },
+      { id:'vc_anim_pitch', label:'点击图片后出现的“音符头移动动画”是否清晰表达了音高错误？', type:'likert7', required:false },
+      { id:'vc_anim_meter', label:'点击量表符号后出现的“细微音差图片”是否清晰表达了错误？', type:'likert7', required:false },
+    ]
+  },
+  {
+    id:'viz_combo_r', type:'video+qs', tag:'可视化-组合',
+    title:'二、可视化：组合——具体节奏错误可视化',
+    video:'4combine.mp4',
+    caption:'展示演奏模式：音高与节奏错误同时出现；circle 查看具体音高，竖线查看具体节奏。包含点击后动画/图片。',
+    questions:[
+      { id:'vc_pitch_localize', label:'现在你能理解“节奏”具体哪里错了吗？', type:'likert7', required:false },
+      { id:'vc_pitch_kind', label:'你能分辨“太快/太慢”以及具体偏差多少吗？', type:'likert7', required:false },
+      { id:'vc_pitch_readable', label:'节奏的斜线是否可读/看清？', type:'likert7', required:false },
+      { id:'vc_rhy_localize', label:'这个时候的音高错误可视化在矩形顶上，你能理解你在哪些地方犯了音高的错？', type:'likert7', required:false },
+      { id:'vc_rhy_kind', label:'你能分辨“太高/太低”以及大概偏差多少吗？', type:'likert7', required:false },
+      { id:'vc_rhy_readable', label:'顶部的音高可视化是否可读/看清？', type:'likert7', required:false },
+      { id:'vc_anim_rhy', label:'点击斜线后出现的“斜线旋转 + 音符头水平移动动画”能否清晰表达节奏错误？', type:'likert7', required:false },
+      { id:'vc_sep_or_together', label:'分别关注音高和节奏 vs. 一起关注：你更偏好“分别”？（1=完全不同意，7=完全同意）', type:'likert7', required:false },
+      { id:'vc_open', label:'补充意见（组合可视化）', type:'textarea', placeholder:'对组合可视化/交互的想法', required:false }
+    ]
+  },
+
+  // 结束页：导出
+  { id:'finish', type:'finish', tag:'完成', title:'完成与导出',
+    blocks:[
+      { kind:'html', html:`<p>感谢你的参与！点击“导出结果”为 JSON 文件，研究者可同时做录音转写。</p>` },
+      { kind:'html', html:`<div class="grid2"><button id="btnExport" class="primary">导出 JSON</button><button id="btnReset" class="ghost">清空数据重新开始</button></div>` }
+    ]
+  }
+];
+
+// ======== 渲染与状态管理 ========
+const content = document.getElementById('content');
+const titleEl = document.getElementById('title');
+const tagEl = document.getElementById('pageTag');
+const bar = document.getElementById('bar');
+const vid = document.getElementById('vid');
+const vidCaption = document.getElementById('vidCaption');
+const btnNext = document.getElementById('btnNext');
+const btnBack = document.getElementById('btnBack');
+
+let STATE = JSON.parse(localStorage.getItem('eval_state_v1') || '{}');
+if(!STATE.page){ STATE.page = 0; STATE.answers = {}; }
+
+function save(){ localStorage.setItem('eval_state_v1', JSON.stringify(STATE)); }
+
+function pct(n){ return Math.round((n)/(PAGES.length-1)*100); }
+
+function render(){
+  const p = PAGES[STATE.page];
+  titleEl.textContent = p.title;
+  tagEl.textContent = p.tag || '';
+  bar.style.width = pct(STATE.page) + '%';
+  // 左侧视频
+  // 左侧视频
+const videoWrapEl = document.querySelector('.videoWrap');
+if (p.video) {
+  // 有视频：显示视频容器并设置视频源
+  if (videoWrapEl) videoWrapEl.style.display = 'flex';
+  vid.style.display = 'block';
+  vid.src = p.video;
+  vidCaption.textContent = p.caption || '';
+} else {
+  // 无视频（如 consent 页）：隐藏视频容器，仅显示说明文字
+  if (videoWrapEl) videoWrapEl.style.display = 'none';
+  vid.removeAttribute('src');
+  vid.load();
+  vidCaption.textContent = p.caption || '右侧答题后继续';
+}
+
+
+  // 右侧内容
+  content.innerHTML = '';
+  if(p.type === 'intro' || p.type === 'finish'){
+    (p.blocks||[]).forEach(b=>{
+      if(b.kind==='html'){
+        const d=document.createElement('div'); d.innerHTML=b.html; content.appendChild(d);
+      } else if(b.kind==='checkbox'){
+        content.appendChild(renderCheckbox(b));
+      } else if(b.kind==='text'){
+        content.appendChild(renderText(b));
+      }
+    });
+  } else if(p.type === 'video+qs' || p.type === 'questions'){
+    (p.questions||[]).forEach(q=> content.appendChild(renderQuestion(q)) );
+  }
+
+  btnBack.style.visibility = STATE.page===0? 'hidden':'visible';
+  btnNext.textContent = STATE.page === PAGES.length-1 ? '完成' : '下一步';
+}
+
+function renderQuestion(q){
+  if(q.type==='group'){
+    const wrap=document.createElement('div'); wrap.className='q';
+    const h=document.createElement('h4'); h.textContent=q.label; wrap.appendChild(h);
+    q.items.forEach(item=> wrap.appendChild(renderQuestion(item)));
+    return wrap;
+  }
+  const node=document.createElement('div'); node.className='q';
+  const h=document.createElement('h4'); h.textContent=q.label; node.appendChild(h);
+  const ans = STATE.answers[q.id];
+  if(q.type==='likert7'){
+    node.appendChild(renderLikert(q.id, ans));
+    node.appendChild(hint('1=非常不同意 … 7=非常同意'));
+  } else if(q.type==='yesno'){
+    node.appendChild(renderOpts(q.id,[{v:'yes',t:'是'},{v:'no',t:'否'}], ans));
+  } else if(q.type==='checkbox'){
+    node.appendChild(renderChecks(q.id, q.options||[], ans));
+  } else if(q.type==='text'){
+    node.appendChild(renderText({id:q.id, placeholder:q.placeholder||'', value:ans||''}));
+  } else if(q.type==='textarea'){
+    const ta=document.createElement('textarea'); ta.rows=4; ta.placeholder=q.placeholder||'\n'; ta.value=ans||'';
+    ta.oninput=()=>{ STATE.answers[q.id]=ta.value; save(); };
+    node.appendChild(ta);
+  }
+  return node;
+}
+
+function renderLikert(id, value){
+  const box=document.createElement('div'); box.className='likert';
+  for(let i=1;i<=7;i++){
+    const lab=document.createElement('label');
+    const inp=document.createElement('input'); inp.type='radio'; inp.name=id; inp.value=String(i);
+    if(String(value)===String(i)) inp.checked=true;
+    inp.onchange=()=>{ STATE.answers[id]=i; save(); };
+    const small=document.createElement('small'); small.className='hint';
+    small.textContent = i===1?'1':(i===4?'4':(i===7?'7':''));
+    lab.appendChild(inp); lab.appendChild(small); box.appendChild(lab);
+  }
+  return box;
+}
+function renderOpts(id, items, value){
+  const box=document.createElement('div'); box.className='opts';
+  items.forEach(it=>{
+    const lab=document.createElement('label');
+    const inp=document.createElement('input'); inp.type='radio'; inp.name=id; inp.value=it.v;
+    if(value===it.v) inp.checked=true; inp.onchange=()=>{ STATE.answers[id]=it.v; save(); };
+    lab.appendChild(inp); lab.appendChild(document.createTextNode(it.t)); box.appendChild(lab);
+  });
+  return box;
+}
+function renderChecks(id, items, value){
+  const set=new Set(Array.isArray(value)?value:[]);
+  const box=document.createElement('div'); box.className='opts';
+  items.forEach(it=>{
+    const lab=document.createElement('label');
+    const inp=document.createElement('input'); inp.type='checkbox'; inp.value=it.value;
+    if(set.has(it.value)) inp.checked=true; inp.onchange=()=>{
+      if(!STATE.answers[id]) STATE.answers[id]=[];
+      const arr=new Set(STATE.answers[id]); inp.checked?arr.add(it.value):arr.delete(it.value);
+      STATE.answers[id]=Array.from(arr); save();
+    };
+    lab.appendChild(inp); lab.appendChild(document.createTextNode(it.label)); box.appendChild(lab);
+  });
+  return box;
+}
+function renderText(cfg){
+  const wrap=document.createElement('div'); wrap.className='q';
+  const inp=document.createElement('input'); inp.type='text'; inp.placeholder=cfg.placeholder||''; inp.value=STATE.answers[cfg.id]||'';
+  inp.oninput=()=>{ STATE.answers[cfg.id]=inp.value; save(); };
+  wrap.appendChild(inp); return wrap;
+}
+
+// 新增：单选勾选（用于“同意参与”）
+function renderCheckbox(cfg){
+  const wrap=document.createElement('div'); wrap.className='q';
+  const lab=document.createElement('label'); lab.style.display='flex'; lab.style.alignItems='center'; lab.style.gap='10px';
+  const inp=document.createElement('input'); inp.type='checkbox';
+  const current=STATE.answers[cfg.id];
+  const isChecked=Array.isArray(current) ? current.includes('yes') : current===true;
+  inp.checked = !!isChecked;
+  inp.onchange=()=>{
+    // 统一存成数组 ['yes'] / []
+    STATE.answers[cfg.id] = inp.checked ? ['yes'] : [];
+    save();
+  };
+  const text=document.createTextNode(cfg.label || (cfg.options?.[0]?.label || '我同意'));
+  lab.appendChild(inp); lab.appendChild(text);
+  wrap.appendChild(lab);
+  return wrap;
+}
+function hint(t){ const s=document.createElement('div'); s.className='hint'; s.textContent=t; return s; }
+
+function validate(){
+  // 简单校验必答：当前页所有 required 项必须有答案
+  const p=PAGES[STATE.page];
+  const ids=[];
+  if(p.type==='video+qs' || p.type==='questions'){
+    (p.questions||[]).forEach(q=>{
+      if(q.type==='group'){ (q.items||[]).forEach(it=>{ if(it.required) ids.push(it.id); }); }
+      else if(q.required){ ids.push(q.id); }
+    });
+  } else if(p.type==='intro'){
+    (p.blocks||[]).forEach(b=>{ if(b.required && b.id) ids.push(b.id); });
+  }
+  for(const id of ids){
+    const v = STATE.answers[id];
+    if(v==null) return false;
+    if(Array.isArray(v)) { if(v.length===0) return false; }
+    else if(v==='') { return false; }
+  }
+  return true;
+}
+
+btnNext.addEventListener('click',()=>{
+  if(STATE.page < PAGES.length-1){
+    if(!validate()) { alert('请先完成本页必答题'); return; }
+    STATE.page++; save(); render();
+  }
+});
+btnBack.addEventListener('click',()=>{ if(STATE.page>0){ STATE.page--; save(); render(); }});
+
+content.addEventListener('click', (e)=>{
+  if(e.target && e.target.id==='btnExport'){
+    const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=(STATE.answers.pid||'eval')+'.json'; a.click(); URL.revokeObjectURL(url);
+  }
+  if(e.target && e.target.id==='btnReset'){
+    if(confirm('确定清空本地数据并回到起始页？')){ localStorage.removeItem('eval_state_v1'); STATE={page:0,answers:{}}; render(); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
