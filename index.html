@@ -105,7 +105,7 @@ const PAGES = [
   {
     id: 'consent', type: 'intro',
     title: 'Before We Start', tag: 'Consent',
-    caption: 'This study includes a 1:1 interview plus a questionnaire. We kindly ask you to answer as sincerely as possible; your responses will be used only for academic research.',
+    caption: 'Thank you for taking part in this study, in which we want to gather feedback on a research tool/system prototype. This study is part of a contribution in a research article. We will be recording your written and spoken responses to help inform our analysis. You can stop this study at any moment and ask for your data to be deleted. Otherwise, we will delete your data upon publication of our article.',
     blocks: [
       { kind:'html', html:`<div class="notice">Flow: Overview video → Feature-by-feature demonstration → Comprehension of visualizations. All questions on the right are required (except open-ended ones).</div>`},
       { kind:'checkbox', id:'consent', label:'I have read the study information and agree to participate in this research.', options:[{value:'yes',label:'Agree'}], required:true },
@@ -129,7 +129,8 @@ const PAGES = [
           { id:'func_rhythm', label:'(4) Rhythm practice (tapping with a metronome and the score)', type:'likert7', required:true },
           { id:'func_perform',label:'(5) Performance practice (record audio to train pitch + rhythm together)', type:'likert7', required:true }
       ]},
-      { id:'train_mode', label:'Do you feel selecting a specific segment (section/full), entering a specific mode, and receiving visual feedback is something you want to do?', type:'likert7', required:true }
+      { id:'train_mode1', label:'Do you feel that selecting a specific segment to hide the rest of the score would help you focus during practice?', type:'likert7', required:true },
+      { id:'train_mode2', label:'Do you feel that visual feedback would help you practice?', type:'likert7', required:true }
     ]
   },
 
@@ -140,11 +141,26 @@ const PAGES = [
     video:'1.mp4',
     caption:'Demonstrates the triggers and corresponding functions for clef / sharp / circle / two vertical lines / circle + two vertical lines.',
     questions:[
-      { id:'g_clef_easy',   label:'For the gesture that triggers displaying accidentals (clef), is it easy to perform and learn?', type:'likert7', required:true },
-      { id:'g_sharp_easy',  label:'For the gesture that triggers annotation (sharp), is it easy to perform and learn?', type:'likert7', required:true },
-      { id:'g_circle_easy', label:'For the gesture that triggers pitch practice (circle), is it easy to perform and learn?', type:'likert7', required:true },
-      { id:'g_vlines_easy', label:'For the gesture that triggers rhythm practice (two vertical lines), is it easy to perform and learn?', type:'likert7', required:true },
-      { id:'g_play_easy',   label:'For the gesture that triggers performance mode (circle + two vertical lines), is it easy to perform and learn?', type:'likert7', required:true }
+      { id:'g_clef_easy', label:'Please evaluate the gesture that triggers the display of accidentals (clef).', type:'group', items:[
+          { id:'g_clef_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_clef_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]},
+      { id:'g_sharp_easy', label:'Please evaluate the gesture that triggers annotation (sharp).', type:'group', items:[
+          { id:'g_sharp_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_sharp_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]},
+      { id:'g_circle_easy', label:'Please evaluate the gesture that triggers pitch practice (circle).', type:'group', items:[
+          { id:'g_circle_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_circle_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]},
+      { id:'g_vlines_easy', label:'Please evaluate the gesture that triggers rhythm practice (two vertical lines).', type:'group', items:[
+          { id:'g_vlines_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_vlines_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]},
+      { id:'g_play_easy', label:'Please evaluate the gesture that triggers performance mode (circle + two vertical lines).', type:'group', items:[
+          { id:'g_play_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_play_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]}
     ]
   },
   {
@@ -153,8 +169,14 @@ const PAGES = [
     video:'1.mp4',
     caption:'In performance mode, circle / vertical lines are used to expand detailed pitch/rhythm visualizations.',
     questions:[
-      { id:'g_perf_circle_pitch', label:'In performance mode, using circle to show detailed “pitch error” visualization is a good approach.', type:'likert7', required:true },
-      { id:'g_perf_vlines_rhy',   label:'In performance mode, using two vertical lines to show detailed “rhythm error” visualization is a good approach.', type:'likert7', required:true }
+      { id:'g_perf_circle_pitch', label:'Please evaluate the gesture that expands detailed pitch visualization in performance mode (circle).', type:'group', items:[
+          { id:'g_perf_circle_pitch1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_perf_circle_pitch2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]},
+      { id:'g_perf_vlines_rhy', label:'Please evaluate the gesture that expands detailed rhythm visualization in performance mode (two vertical lines).', type:'group', items:[
+          { id:'g_perf_vlines_rhy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
+          { id:'g_perf_vlines_rhy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      ]}
     ]
   },
 
@@ -192,10 +214,10 @@ const PAGES = [
     video:'2.png',
     caption:'Shows another rhythm errors viz with different logic.',
     questions:[
-      { id:'vr_is_rhy',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
-      { id:'vr_where_wrong',label:'Can you locate where the error occurs?', type:'likert7', required:true },
-      { id:'vr_kind',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
-      { id:'vr_readable',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
+      { id:'vr_is_rhy2',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
+      { id:'vr_where_wrong2',label:'Can you locate where the error occurs?', type:'likert7', required:true },
+      { id:'vr_kind2',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
+      { id:'vr_readable2',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
     ]
   },
   {
@@ -204,8 +226,8 @@ const PAGES = [
     video:['1.png','2.png'],
     caption:'Compare two rhythm error visualizations',
     questions:[
-      { id:'vr_is_rhy', label:'Between these two rhythm visualizations, which one is easier to understand?', type:'likert7', required:true },
-      { id:'vr_open',   label:'Additional comments (Rhythm visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
+      { id:'vr_is_rhy3', label:'Between these two rhythm visualizations, which one is easier to understand?', type:'likert7', required:true },
+      { id:'vr_open3',   label:'Additional comments (Rhythm visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
     ]
   },
 
@@ -243,12 +265,12 @@ const PAGES = [
     video:'4combine2.mp4',
     caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
     questions:[
-      { id:'vc_pitch_localize', label:'Now can you understand exactly where the pitch went wrong?', type:'likert7', required:true },
-      { id:'vc_pitch_kind',     label:'Can you tell “too high / too low” and the specific amount of deviation?', type:'likert7', required:true },
-      { id:'vc_pitch_readable', label:'Are the detailed pitch icons/images readable / clear?', type:'likert7', required:true },
-      { id:'vc_rhy_localize',   label:'At this time, rhythm error visualization is at the top of the rectangle. Can you understand where rhythm errors occur?', type:'likert7', required:true },
-      { id:'vc_rhy_kind',       label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
-      { id:'vc_rhy_readable',   label:'Is the top rhythm visualization readable / clear?', type:'likert7', required:true },
+      { id:'vc_pitch_localize2', label:'Now can you understand exactly where the pitch went wrong?', type:'likert7', required:true },
+      { id:'vc_pitch_kind2',     label:'Can you tell “too high / too low” and the specific amount of deviation?', type:'likert7', required:true },
+      { id:'vc_pitch_readable2', label:'Are the detailed pitch icons/images readable / clear?', type:'likert7', required:true },
+      { id:'vc_rhy_localize2',   label:'At this time, rhythm error visualization is at the top of the rectangle. Can you understand where rhythm errors occur?', type:'likert7', required:true },
+      { id:'vc_rhy_kind2',       label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
+      { id:'vc_rhy_readable2',   label:'Is the top rhythm visualization readable / clear?', type:'likert7', required:true },
       { id:'vc_anim_pitch',     label:'Does the “note head movement” animation after clicking clearly express pitch errors?', type:'likert7', required:true },
       { id:'vc_anim_meter',     label:'Does the “fine pitch deviation graphic” after clicking the gauge icon clearly express the error?', type:'likert7', required:true }
     ]
@@ -259,12 +281,12 @@ const PAGES = [
     video:'4combine3.mp4',
     caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
     questions:[
-      { id:'vc_pitch_localize', label:'Now can you understand exactly where the rhythm went wrong?', type:'likert7', required:true },
-      { id:'vc_pitch_kind',     label:'Can you tell “too fast / too slow” and the specific amount of deviation?', type:'likert7', required:true },
-      { id:'vc_pitch_readable', label:'Are the slanted rhythm lines readable / clear?', type:'likert7', required:true },
-      { id:'vc_rhy_localize',   label:'At this time, pitch error visualization is at the top of the rectangle. Can you understand where pitch errors occur?', type:'likert7', required:true },
-      { id:'vc_rhy_kind',       label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
-      { id:'vc_rhy_readable',   label:'Is the top pitch visualization readable / clear?', type:'likert7', required:true },
+      { id:'vc_pitch_localize3', label:'Now can you understand exactly where the rhythm went wrong?', type:'likert7', required:true },
+      { id:'vc_pitch_kind3',     label:'Can you tell “too fast / too slow” and the specific amount of deviation?', type:'likert7', required:true },
+      { id:'vc_pitch_readable3', label:'Are the slanted rhythm lines readable / clear?', type:'likert7', required:true },
+      { id:'vc_rhy_localize3',   label:'At this time, pitch error visualization is at the top of the rectangle. Can you understand where pitch errors occur?', type:'likert7', required:true },
+      { id:'vc_rhy_kind3',       label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
+      { id:'vc_rhy_readable3',   label:'Is the top pitch visualization readable / clear?', type:'likert7', required:true },
       { id:'vc_anim_rhy',       label:'After clicking the slanted line, does the “line rotation + horizontal note-head movement” animation clearly express rhythm errors?', type:'likert7', required:true },
       { id:'vc_sep_or_together',label:'Focusing separately on pitch and rhythm vs. both together: do you prefer handling them separately? (1 = Strongly disagree, 7 = Strongly agree)', type:'likert7', required:true },
       { id:'vc_open',           label:'Additional comments (Combined visualization / interaction)', type:'textarea', placeholder:'Any thoughts on the combined visuals or interactions', required:false }
@@ -291,7 +313,7 @@ const vidCaption = document.getElementById('vidCaption');
 const btnNext = document.getElementById('btnNext');
 const btnBack = document.getElementById('btnBack');
 
-let STATE = JSON.parse(localStorage.getItem('eval_state_v1') || '{}');
+let STATE = JSON.parse(localStorage.getItem('eval_state_v2') || '{}');
 if(!STATE.page){ STATE.page = 0; STATE.answers = {}; }
 
 function save(){ localStorage.setItem('eval_state_v1', JSON.stringify(STATE)); }
