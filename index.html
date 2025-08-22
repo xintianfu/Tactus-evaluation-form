@@ -113,6 +113,120 @@ const PAGES = [
     ]
   },
 
+  {
+    id: 'pre_gate',
+    type: 'questions',
+    tag: 'Pre-Check',
+    title: 'Before the overview',
+    caption: 'Have you previously taken part in an interview for this study?',
+    questions: [
+      { id: 'done_interview_before', label: 'Have you done an interview before for this study?', type: 'yesno', required: true }
+    ]
+  },
+
+  {
+    id: 'pre_background',
+    type: 'questions',
+    tag: 'Background',
+    title: 'Your background with music practice',
+    caption: 'Please answer a few questions about your musical background.',
+    questions: [
+      { id: 'main_instrument', label: 'What main instrument do you play?', type: 'text', required: true },
+      { id: 'learning_duration', label: 'How long have you been learning this instrument?', type: 'text', required: true },
+      {
+        id: 'learned_mode',
+        label: 'Did you learn by yourself, or do you/did you have a teacher?',
+        type: 'opts',
+        required: true,
+        options: [
+          { v:'self',    t:'I learned by myself' },
+          { v:'teacher', t:'I have/had a teacher' },
+          { v:'both',    t:'Both' }      
+        ]
+      },
+      {
+        id: 'ensemble_mode',
+        label: 'Do you play alone, or do you also play with other musicians?',
+        type: 'opts',
+        required: true,
+        options: [
+          { v:'alone', t:'I usually play alone' },
+          { v:'others', t:'I usually play with other musicians' },
+          { v:'both',  t:'Both' }  
+        ]
+      },
+      {
+        id: 'ensemble_marking_diff',
+        label: 'If other musicians: Have you noticed any differences in how you mark your sheet music when playing solo, in a duet, or in an orchestra?',
+        type: 'textarea',
+        placeholder: 'Describe any differences you’ve noticed…',
+        required: true,
+        dependsOn: 'ensemble_mode',
+        oneOf: ['others','both']
+      },
+
+      { id: 'marking_routine',
+        label: 'Do you have your own “marking routine”? (e.g., annotate after each page, or whenever something comes to mind)',
+        type: 'textarea',
+        placeholder: 'Describe your routine if any…',
+        required: true
+      },
+
+      { id: 'practice_medium', label: 'Do you usually use printed scores or a tablet to practice?', type: 'group', items: [
+          { id: 'practice_medium_choice', label: 'Choose one', type: 'opts', required: true,
+            options: [
+              { v:'printed', t:'Printed scores' },
+              { v:'tablet',  t:'Tablet' },
+              { v:'both',    t:'Both' }
+            ]
+          },
+          { id: 'practice_why', label: 'Why?', type: 'textarea', placeholder: 'Your reasons…', required: true }
+      ]},
+      {
+        id: 'tablet_software_block',
+        label: 'If you use a tablet:',
+        type: 'group',
+        dependsOn: 'practice_medium_choice',   
+        oneOf: ['tablet','both'],             
+        items: [
+          {
+            id: 'tablet_software',
+            label: 'What software do you use?',
+            type: 'text',
+            required: true
+          },
+          {
+            id: 'tablet_duration',
+            label: 'For how long have you used it?',
+            type: 'text',
+            required: true
+          },
+          {
+            id: 'tablet_features_helpful',
+            label: 'What are some helpful features you’ve experienced with it?',
+            type: 'textarea',
+            placeholder: 'List helpful features…',
+            required: true
+          },
+          {
+            id: 'tablet_features_inconveniences',
+            label: 'What inconveniences have you experienced with it?',
+            type: 'textarea',
+            placeholder: 'List inconveniences…',
+            required: true
+          }
+        ]
+      },
+
+      {
+        id: 'piece_learning_time',
+        label: 'How long did it take you to learn this piece?',
+        type: 'text',
+        required: true
+      }
+    ]
+  },
+
   // A. Overview
   {
     id:'overview', type:'video+qs', tag:'Overview',
@@ -313,10 +427,11 @@ const vidCaption = document.getElementById('vidCaption');
 const btnNext = document.getElementById('btnNext');
 const btnBack = document.getElementById('btnBack');
 
-let STATE = JSON.parse(localStorage.getItem('eval_state_v2') || '{}');
+
+let STATE = { page: 0, answers: {} };
 if(!STATE.page){ STATE.page = 0; STATE.answers = {}; }
 
-function save(){ localStorage.setItem('eval_state_v1', JSON.stringify(STATE)); }
+function save(){  }
 
 function pct(n){ return Math.round((n)/(PAGES.length-1)*100); }
 
@@ -438,6 +553,38 @@ function render(){
   }
 
   fitMediaHeights(videoWrapEl);
+  updateConditionalVisibility(p);
+  content.scrollTop = 0;
+
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); 
+  });
+
+}
+
+function isVisibleQuestion(q){
+  if(!q) return true;
+  if(q.dependsOn == null) return true;
+  const v = STATE.answers[q.dependsOn];
+  if(q.hasOwnProperty('equals')) return v === q.equals;
+  if(Array.isArray(q.oneOf)) return q.oneOf.includes(v);
+  return true;
+}
+
+function updateConditionalVisibility(p){
+  const all = [];
+  const collect = (qs)=> (qs||[]).forEach(q=>{
+    all.push(q);   
+    if(q.type==='group') collect(q.items||[]);
+    else all.push(q);
+  });
+  collect(p.questions);
+
+  all.forEach(q=>{
+    const el = content.querySelector(`[data-qid="${q.id}"]`);
+    if(!el) return;
+    el.style.display = isVisibleQuestion(q) ? '' : 'none';
+  });
 }
 
 function fitMediaHeights(wrap){
@@ -464,12 +611,17 @@ function fitMediaHeights(wrap){
 
 function renderQuestion(q){
   if(q.type==='group'){
-    const wrap=document.createElement('div'); wrap.className='q';
-    const h=document.createElement('h4'); h.textContent=q.label; wrap.appendChild(h);
-    q.items.forEach(item=> wrap.appendChild(renderQuestion(item)));
+    const wrap=document.createElement('div'); 
+    wrap.className='q';
+    wrap.dataset.qid = q.id; 
+    const h=document.createElement('h4'); 
+    h.textContent=q.label; 
+    wrap.appendChild(h);
+    (q.items||[]).forEach(item=> wrap.appendChild(renderQuestion(item)));
     return wrap;
   }
   const node=document.createElement('div'); node.className='q';
+  node.dataset.qid = q.id; // ★ 用于条件显示定位
   const h=document.createElement('h4'); h.textContent=q.label; node.appendChild(h);
   const ans = STATE.answers[q.id];
   if(q.type==='likert7'){
@@ -477,6 +629,9 @@ function renderQuestion(q){
     node.appendChild(hint('1 = Strongly disagree … 7 = Strongly agree'));
   } else if(q.type==='yesno'){
     node.appendChild(renderOpts(q.id,[{v:'yes',t:'Yes'},{v:'no',t:'No'}], ans));
+  } else if(q.type==='opts'){ // ★ 支持自定义单选选项
+    const items = (q.options||[]).map(it=>({v:it.v, t:it.t}));
+    node.appendChild(renderOpts(q.id, items, ans));
   } else if(q.type==='checkbox'){
     node.appendChild(renderChecks(q.id, q.options||[], ans));
   } else if(q.type==='text'){
@@ -488,6 +643,7 @@ function renderQuestion(q){
   }
   return node;
 }
+
 
 function renderLikert(id, value){
   const box=document.createElement('div'); box.className='likert';
@@ -553,32 +709,83 @@ function renderCheckbox(cfg){
 function hint(t){ const s=document.createElement('div'); s.className='hint'; s.textContent=t; return s; }
 
 function validate(){
-  const p=PAGES[STATE.page];
-  const ids=[];
+  const p = PAGES[STATE.page];
+  const requiredIds = [];
+
   if(p.type==='video+qs' || p.type==='questions'){
     (p.questions||[]).forEach(q=>{
-      if(q.type==='group'){ (q.items||[]).forEach(it=>{ if(it.required) ids.push(it.id); }); }
-      else if(q.required){ ids.push(q.id); }
+      if(q.type==='group'){
+        if(!isVisibleQuestion(q)) return;   
+        (q.items||[]).forEach(it=>{
+          if(it.required && isVisibleQuestion(it)) requiredIds.push(it.id);
+        });
+      } else {
+        if(q.required && isVisibleQuestion(q)) requiredIds.push(q.id);
+      }
     });
   } else if(p.type==='intro'){
-    (p.blocks||[]).forEach(b=>{ if(b.required && b.id) ids.push(b.id); });
+    (p.blocks||[]).forEach(b=>{ if(b.required && b.id) requiredIds.push(b.id); });
   }
-  for(const id of ids){
+
+  for(const id of requiredIds){
     const v = STATE.answers[id];
     if(v==null) return false;
-    if(Array.isArray(v)) { if(v.length===0) return false; }
-    else if(v==='') { return false; }
+    if(Array.isArray(v)){ if(v.length===0) return false; }
+    else if(v==='') return false;
   }
   return true;
 }
 
+
+
 btnNext.addEventListener('click',()=>{
   if(STATE.page < PAGES.length-1){
     if(!validate()) { alert('Please complete the required questions on this page first.'); return; }
+
+    const current = PAGES[STATE.page];
+
+    if(current.id === 'pre_gate'){
+      const ans = STATE.answers['done_interview_before']; // 'yes' or 'no'
+
+      const idxOverview = PAGES.findIndex(p=>p.id==='overview');
+      const idxBackground = PAGES.findIndex(p=>p.id==='pre_background');
+
+      if(ans === 'yes'){
+        STATE.page = (idxOverview>=0 ? idxOverview : STATE.page+1);
+      } else {
+        STATE.page = (idxBackground>=0 ? idxBackground : STATE.page+1);
+      }
+      save(); render(); return;
+    }
+
+    if(current.id === 'pre_background'){
+      const idxOverview = PAGES.findIndex(p=>p.id==='overview');
+      STATE.page = (idxOverview>=0 ? idxOverview : STATE.page+1);
+      save(); render(); return;
+    }
+
     STATE.page++; save(); render();
   }
 });
-btnBack.addEventListener('click',()=>{ if(STATE.page>0){ STATE.page--; save(); render(); }});
+function shouldSkipPage(page){
+  if(!page) return false;
+  if (page.id === 'pre_background' && STATE.answers['done_interview_before'] === 'yes') {
+    return true;
+  }
+  return false;
+}
+
+btnBack.addEventListener('click', ()=>{
+  if (STATE.page > 0) {
+    let prev = STATE.page - 1;
+    while (prev >= 0 && shouldSkipPage(PAGES[prev])) {
+      prev--;
+    }
+    STATE.page = Math.max(0, prev);
+    save(); render();
+  }
+});
+
 
 content.addEventListener('click', (e)=>{
   if(e.target && e.target.id==='btnExport'){
@@ -588,10 +795,16 @@ content.addEventListener('click', (e)=>{
   }
   if(e.target && e.target.id==='btnReset'){
     if(confirm('Clear local data and restart from the first page?')){
-      localStorage.removeItem('eval_state_v1'); STATE={page:0,answers:{}}; render();
+      localStorage.removeItem('eval_state_v2'); STATE={page:0,answers:{}}; render();
     }
   }
 });
+content.addEventListener('input', ()=>{ updateConditionalVisibility(PAGES[STATE.page]); });
+content.addEventListener('change', ()=>{ 
+  updateConditionalVisibility(PAGES[STATE.page]); 
+});
+
+
 
 render();
 </script>
