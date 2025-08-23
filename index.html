@@ -41,42 +41,19 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media (max-width:700px){.grid2{grid-template-columns:1fr}}
     .videoWrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-      overflow: hidden;
+      display: flex; justify-content: center; align-items: center; height: 100%; overflow: hidden;
     }
-    .videoWrap video{
-      width: 720px;
-      height: auto;
-      max-height: 100%;
-      object-fit: contain;
+    .videoWrap video, .videoWrap img{
+      width: 720px; height: auto; max-height: 100%; object-fit: contain; display:block;
     }
-    .videoWrap img{
-      width: 720px;
-      height: auto;
-      max-height: 100%;
-      object-fit: contain;
-      display: block;
-      background: #FCF7F4 !important;
-      border-radius: 0;
-    }
+    .videoWrap img{ background:#FCF7F4 !important; border-radius:0; }
   </style>
 </head>
 <body>
 <div class="app">
   <!-- Left: media area -->
   <section class="left">
-    <div class="videoWrap">
-      <video id="vid" controls preload="metadata" poster="" src=""
-       playsinline webkit-playsinline x5-playsinline
-       controlslist="nodownload noplaybackrate">
-        Your browser does not support the video tag.
-      </video>
-      <!-- Image placeholder -->
-      <img id="pic" alt="" style="display:none;" />
-    </div>
+    <div class="videoWrap"></div>
     <div class="caption">
       <div class="meta">
         <span class="pill" id="pageTag">Overview</span>
@@ -102,17 +79,19 @@
 <script>
 // ======== Pages & Questions ========
 const PAGES = [
+  // Consent
   {
     id: 'consent', type: 'intro',
     title: 'Before We Start', tag: 'Consent',
     caption: 'Thank you for taking part in this study, in which we want to gather feedback on a research system prototype. This study is part of a contribution in a research article.<br><br>We will be recording your written and spoken responses to help inform our analysis. You can stop this study at any moment and ask for your data to be deleted. Otherwise, we will delete data upon publication of article.',
     blocks: [
-      { kind:'html', html:`<div class="notice">Flow: Overview video → Feature-by-feature demonstration → Comprehension of visualizations. All questions on the right are required (except open-ended ones).</div>`},
+      { kind:'html', html:`<div class="notice">Flow: Overview → Feature-by-feature demos → Visualization comprehension. All questions on the right are required (except open-ended).</div>`},
       { kind:'checkbox', id:'consent', label:'I have read the study information and agree to participate in this research.', options:[{value:'yes',label:'Agree'}], required:true },
       { kind:'text', id:'pid', label:'Participant ID (filled by the researcher; may be left blank)', placeholder:'e.g., P07', required:true }
     ]
   },
 
+  // Pre gate & background (kept)
   {
     id: 'pre_gate',
     type: 'questions',
@@ -133,277 +112,592 @@ const PAGES = [
     questions: [
       { id: 'main_instrument', label: 'What main instrument do you play?', type: 'text', required: true },
       { id: 'learning_duration', label: 'How long have you been learning this instrument?', type: 'text', required: true },
-      {
-        id: 'learned_mode',
-        label: 'Did you learn by yourself, or do you/did you have a teacher?',
-        type: 'opts',
-        required: true,
+
+      { id: 'learned_mode', label: 'Did you learn by yourself, or do you/did you have a teacher?', type: 'opts', required: true,
         options: [
           { v:'self',    t:'I learned by myself' },
           { v:'teacher', t:'I have/had a teacher' },
-          { v:'both',    t:'Both' }      
+          { v:'both',    t:'Both' }
         ]
       },
-      {
-        id: 'ensemble_mode',
-        label: 'Do you play alone, or do you also play with other musicians?',
-        type: 'opts',
-        required: true,
+
+      { id: 'ensemble_mode', label: 'Do you play alone, or do you also play with other musicians?', type: 'opts', required: true,
         options: [
-          { v:'alone', t:'I usually play alone' },
-          { v:'others', t:'I usually play with other musicians' },
-          { v:'both',  t:'Both' }  
+          { v:'alone',  t:'I usually play alone' },
+          { v:'others', t:'I also play with other musicians' },
+          { v:'both',   t:'Both' }
         ]
       },
-      {
-        id: 'ensemble_marking_diff',
+
+      { id: 'ensemble_marking_diff',
         label: 'If other musicians: Have you noticed any differences in how you mark your sheet music when playing solo, in a duet, or in an orchestra?',
-        type: 'textarea',
-        placeholder: 'Describe any differences you’ve noticed…',
-        required: true,
-        dependsOn: 'ensemble_mode',
-        oneOf: ['others','both']
+        type: 'textarea', placeholder: 'Describe any differences you’ve noticed…', required: true,
+        dependsOn: 'ensemble_mode', oneOf: ['others','both']
       },
 
       { id: 'marking_routine',
         label: 'Do you have your own “marking routine”? (e.g., annotate after each page, or whenever something comes to mind)',
-        type: 'textarea',
-        placeholder: 'Describe your routine if any…',
-        required: true
+        type: 'textarea', placeholder: 'Describe your routine if any…', required: true
       },
 
       { id: 'practice_medium', label: 'Do you usually use printed scores or a tablet to practice?', type: 'group', items: [
-          { id: 'practice_medium_choice', label: 'Choose one', type: 'opts', required: true,
-            options: [
-              { v:'printed', t:'Printed scores' },
-              { v:'tablet',  t:'Tablet' },
-              { v:'both',    t:'Both' }
-            ]
-          },
-          { id: 'practice_why', label: 'Why?', type: 'textarea', placeholder: 'Your reasons…', required: true }
+        { id: 'practice_medium_choice', label: 'Choose one', type: 'opts', required: true,
+          options: [
+            { v:'printed', t:'Printed scores' },
+            { v:'tablet',  t:'Tablet' },
+            { v:'both',    t:'Both' }
+          ]
+        },
+        { id: 'practice_why', label: 'Why?', type: 'textarea', placeholder: 'Your reasons…', required: true }
       ]},
-      {
-        id: 'tablet_software_block',
-        label: 'If you use a tablet:',
-        type: 'group',
-        dependsOn: 'practice_medium_choice',   
-        oneOf: ['tablet','both'],             
-        items: [
-          {
-            id: 'tablet_software',
-            label: 'What software do you use?',
-            type: 'text',
-            required: true
-          },
-          {
-            id: 'tablet_duration',
-            label: 'For how long have you used it?',
-            type: 'text',
-            required: true
-          },
-          {
-            id: 'tablet_features_helpful',
-            label: 'What are some helpful features you’ve experienced with it?',
-            type: 'textarea',
-            placeholder: 'List helpful features…',
-            required: true
-          },
-          {
-            id: 'tablet_features_inconveniences',
-            label: 'What inconveniences have you experienced with it?',
-            type: 'textarea',
-            placeholder: 'List inconveniences…',
-            required: true
-          }
-        ]
-      },
 
-      {
-        id: 'piece_learning_time',
-        label: 'How long did it take you to learn this piece?',
-        type: 'text',
-        required: true
+      { id: 'tablet_software_block', label: 'If you use a tablet:', type: 'group',
+        dependsOn: 'practice_medium_choice', oneOf: ['tablet','both'],
+        items: [
+          { id: 'tablet_software', label: 'What software do you use?', type: 'text', required: true },
+          { id: 'tablet_duration', label: 'For how long have you used it?', type: 'text', required: true },
+          { id: 'tablet_features_helpful', label: 'What are some helpful features you’ve experienced with it?', type: 'textarea', placeholder: 'List helpful features…', required: true },
+          { id: 'tablet_features_inconveniences', label: 'What inconveniences have you experienced with it?', type: 'textarea', placeholder: 'List inconveniences…', required: true }
+        ]
       }
     ]
   },
 
-  // A. Overview
+// Overview 
+{
+  id:'overview', type:'intro', tag:'Overview',
+  title:'Overview: System Goals & Five Features',
+  video:'1.mp4',
+  caption:'overview of the system and its five main features',
+  blocks: [
+    {
+      kind:'html',
+      html: `
+        <div class="notice" style="margin-bottom:12px;">
+          Our idea is to design a system that helps musicians practice reading scores.
+        </div>
+        <div style="line-height:1.6;">
+          <p><strong>We focused on five features</strong> that can support musicians in their practice:</p>
+          <ul>
+            <li>Reveal All Accidentals</li>
+            <li>Add Symbols</li>
+            <li>Pitch Practice Mode</li>
+            <li>Rhythm Practice Mode</li>
+            <li>Performance Practice Mode</li>
+          </ul>
+        </div>
+      `
+    }
+  ]
+},
+  // Feature 1 — Accidentals
   {
-    id:'overview', type:'video+qs', tag:'Overview',
-    title:'Overview: System Goals & Gesture Triggers',
-    video:'1.mp4',
-    caption:'Shows system goals, five core functions, and corresponding gestures: clef / sharp / circle / two vertical lines / circle + vertical line (perform).',
+    id:'feature1_accidentals', type:'video+qs', tag:'Feature',
+    title:'Feature 1 — Reveal All Accidentals',
+    video:'1.1.mp4',
+    caption:'Display all accidentals according to the key signature; users can also choose which accidentals to show.',
     questions:[
-      { id:'useful_system', label:'Do you think this system would be useful for you?', type:'likert7', required:true },
-      { id:'intend_use', label:'Would you be willing to use it in your daily practice?', type:'likert7', required:true },
-      { id:'useful_functions', label:'Please rate the usefulness of the five core features (1 = Not useful at all, 7 = Very useful).', type:'group', items:[
-          { id:'func_clef',   label:'(1) Reveal all accidentals', type:'likert7', required:true },
-          { id:'func_annot',  label:'(2) Add annotation', type:'likert7', required:true },
-          { id:'func_pitch',  label:'(3) Pitch practice (singing the melody to train pitch)', type:'likert7', required:true },
-          { id:'func_rhythm', label:'(4) Rhythm practice (tapping with a metronome and the score)', type:'likert7', required:true },
-          { id:'func_perform',label:'(5) Performance practice (record audio to train pitch + rhythm together)', type:'likert7', required:true }
-      ]},
-      { id:'train_mode1', label:'Do you feel that selecting a specific segment to hide the rest of the score would help you focus during practice?', type:'likert7', required:true },
-      { id:'train_mode2', label:'Do you feel that visual feedback would help you practice?', type:'likert7', required:true }
+      { id:'f1_useful', label:'Please rate the usefulness of this feature (1 = Not useful at all, 7 = Very useful).', type:'likert7', required:true },
+      { id:'f1_g_clef', label:'Please evaluate the gesture that triggers the display of accidentals (clef).', type:'group', items:[
+        { id:'f1_g_clef_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f1_g_clef_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
+      ]}
     ]
   },
 
-  // B. Gestures
+  // Feature 2 — Add Symbols
   {
-    id:'gestures1', type:'video+qs', tag:'Gestures-1',
-    title:'I. Gesture Comprehension (Part 1)',
-    video:'1.mp4',
-    caption:'Demonstrates the triggers and corresponding functions for clef / sharp / circle / two vertical lines / circle + two vertical lines.',
+    id:'feature2_symbols', type:'video+qs', tag:'Feature',
+    title:'Feature 2 — Add Symbols',
+    video:'1.2.mp4',
+    caption:'Add accidentals or custom symbols to the score.',
     questions:[
-      { id:'g_clef_easy', label:'Please evaluate the gesture that triggers the display of accidentals (clef).', type:'group', items:[
-          { id:'g_clef_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_clef_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
-      ]},
-      { id:'g_sharp_easy', label:'Please evaluate the gesture that triggers annotation (sharp).', type:'group', items:[
-          { id:'g_sharp_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_sharp_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
-      ]},
-      { id:'g_circle_easy', label:'Please evaluate the gesture that triggers pitch practice (circle).', type:'group', items:[
-          { id:'g_circle_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_circle_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
-      ]},
-      { id:'g_vlines_easy', label:'Please evaluate the gesture that triggers rhythm practice (two vertical lines).', type:'group', items:[
-          { id:'g_vlines_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_vlines_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
-      ]},
-      { id:'g_play_easy', label:'Please evaluate the gesture that triggers performance mode (circle + two vertical lines).', type:'group', items:[
-          { id:'g_play_easy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_play_easy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      { id:'f2_useful', label:'Please rate the usefulness of this feature (1 = Not useful at all, 7 = Very useful).', type:'likert7', required:true },
+      { id:'f2_g_sharp', label:'Please evaluate the gesture that triggers annotation (sharp).', type:'group', items:[
+        { id:'f2_g_sharp_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f2_g_sharp_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
       ]}
     ]
   },
+
+  // Feature 3 — Pitch Practice
   {
-    id:'gestures2', type:'video+qs', tag:'Gestures-2',
-    title:'I. Gesture Comprehension (Part 2)',
-    video:'1.mp4',
-    caption:'In performance mode, circle / vertical lines are used to expand detailed pitch/rhythm visualizations.',
+    id:'feature3_pitch', type:'video+qs', tag:'Feature',
+    title:'Feature 3 — Pitch Practice Mode',
+    video:'1.3.mp4',
+    caption:'Sing the melody and record; the system provides feedback on pitch errors.',
     questions:[
-      { id:'g_perf_circle_pitch', label:'Please evaluate the gesture that expands detailed pitch visualization in performance mode (circle).', type:'group', items:[
-          { id:'g_perf_circle_pitch1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_perf_circle_pitch2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      { id:'f3_useful', label:'Please rate the usefulness of this feature (1 = Not useful at all, 7 = Very useful).', type:'likert7', required:true },
+      { id:'f3_g_circle', label:'Please evaluate the gesture that triggers pitch practice (circle).', type:'group', items:[
+        { id:'f3_g_circle_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f3_g_circle_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
       ]},
-      { id:'g_perf_vlines_rhy', label:'Please evaluate the gesture that expands detailed rhythm visualization in performance mode (two vertical lines).', type:'group', items:[
-          { id:'g_perf_vlines_rhy1',   label:'Do you find this easy to perform?', type:'likert7', required:true },
-          { id:'g_perf_vlines_rhy2',  label:'Do you find this easy to remember?', type:'likert7', required:true },
+      { id:'f3_train_focus', label:'Do you feel that selecting a specific segment to hide the rest of the score would help you focus during practice?', type:'likert7', required:true }
+    ]
+  },
+
+  // Feature 4 — Rhythm Practice
+  {
+    id:'feature4_rhythm', type:'video+qs', tag:'Feature',
+    title:'Feature 4 — Rhythm Practice Mode',
+    video:'1.4.mp4',
+    caption:'Tap along with the metronome and the score; the system detects and shows rhythm errors.',
+    questions:[
+      { id:'f4_useful', label:'Please rate the usefulness of this feature (1 = Not useful at all, 7 = Very useful).', type:'likert7', required:true },
+      { id:'f4_g_vlines', label:'Please evaluate the gesture that triggers rhythm practice (two vertical lines).', type:'group', items:[
+        { id:'f4_g_vlines_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f4_g_vlines_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
       ]}
     ]
   },
+
+  // Feature 5 — Performance Practice
+  {
+    id:'feature5_performance', type:'video+qs', tag:'Feature',
+    title:'Feature 5 — Performance Practice Mode',
+    video:'1.5.mp4',
+    caption:'Record your instrument performance; the system gives feedback on both pitch and rhythm together.',
+    questions:[
+      { id:'f5_useful', label:'Please rate the usefulness of this feature (1 = Not useful at all, 7 = Very useful).', type:'likert7', required:true },
+      { id:'f5_g_play', label:'Please evaluate the gesture that triggers performance mode (circle + two vertical lines).', type:'group', items:[
+        { id:'f5_g_play_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f5_g_play_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
+      ]},
+      { id:'f3_g_perf_circle', label:'Please evaluate the gesture that expands detailed pitch visualization in performance mode (circle again).', type:'group', items:[
+        { id:'f3_g_perf_circle_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f3_g_perf_circle_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
+      ]},
+      { id:'f4_g_perf_vlines', label:'Please evaluate the gesture that expands detailed rhythm visualization in performance mode (two vertical lines again).', type:'group', items:[
+        { id:'f4_g_perf_vlines_perf', label:'Do you find this easy to perform?', type:'likert7', required:true },
+        { id:'f4_g_perf_vlines_mem',  label:'Do you find this easy to remember?', type:'likert7', required:true }
+      ]}
+    ]
+  },
+
+  /* ===== Visualization pages (unchanged IDs from your latest unique set) ===== */
 
   // C1. Pitch visualization
   {
-    id:'viz_pitch', type:'video+qs', tag:'Viz-Pitch',
-    title:'II. Visualization: Pitch Errors',
-    video:'2pitch.mp4',
-    caption:'Shows two types of pitch errors roughly(too high / too low), and the use of colors and symbols.',
+    id:'viz_pitch_r', type:'video+qs', tag:'Viz-Pitch',
+    title:'II. Visualization: Pitch Errors(rough)',
+    video:'2.1.mp4',
+    caption:'Shows two types of pitch errors (too high / too low) as well as colors and symbols.',
     questions:[
-      { id:'vp_is_pitch',        label:'Do these marks clearly indicate “pitch”?', type:'likert7', required:true },
-      { id:'vp_where_wrong',     label:'Can you locate where the error occurs?', type:'likert7', required:true },
-      { id:'vp_kind',            label:'Can you distinguish “too high / too low” and roughly the magnitude of the error?', type:'likert7', required:true },
-      { id:'vp_readable',        label:'Is it readable / easy to see overall?', type:'likert7', required:true },
-      { id:'vp_open',            label:'Additional comments (Pitch visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
+
+      // 1) Do the marks clearly indicate pitch?
+      { id:'vp_marks_meaning_clear',
+        label:'Do these marks(colored note heads + small note symbols and line above) clearly indicate “pitch errors”?',
+        type:'likert7', required:true
+      },
+
+      // 2) Counting task
+      { id:'vp_count_errors',
+        label:'How many pitch errors can you count in this excerpt?',
+        type:'text', required:true
+      },
+
+      // 3) Error A
+      { id:'vp_A_block',
+        label:'Error A',
+        type:'group',
+        items:[
+          { id:'vp_A_direction',
+            label:'Is error A “too high” or “too low”?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_high', t:'Too high' },
+              { v:'too_low',  t:'Too low' }
+            ]
+          },
+          { id:'vp_A_magnitude',
+            label:'What is the approximate magnitude of error A? (e.g., 20 cents / a semitone / more than a fourth / “Not sure”)',
+            type:'text', required:true
+          }
+        ]
+      },
+
+      // 4) Error B
+      { id:'vp_B_block',
+        label:'Error B',
+        type:'group',
+        items:[
+          { id:'vp_B_direction',
+            label:'Is error B “too high” or “too low”?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_high', t:'Too high' },
+              { v:'too_low',  t:'Too low' }
+            ]
+          },
+          { id:'vp_B_magnitude',
+            label:'What is the approximate magnitude of error B?',
+            type:'text', required:true
+          }
+        ]
+      },
+
+      // 5) Readability
+      { id:'vp_readable_new',
+        label:'Overall, is this pitch error visualization easy to read?',
+        type:'likert7', required:true
+      },
+
+      // 6) Open comments
+      { id:'vp_open_new',
+        label:'Additional comments (Pitch visualization):',
+        type:'textarea', placeholder:'Any pros/cons or suggestions', required:false
+      }
+    ]
+  },
+  {
+    id:'viz_sp', type:'video+qs', tag:'Viz-Combined',
+    title:'II. Visualization: Pitch Errors (detailed)',
+    video:'sp.mp4',
+    caption:'Shows specific pitch errors with colors and symbols as well as animation.',
+    questions:[
+      // Error A
+      {
+        id:'sp_A_block',
+        label:'Error A',
+        type:'group',
+        items:[
+          {
+            id:'sp_A_direction',
+            label:'Is error A “too high” or “too low”?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_high', t:'Too high' },
+              { v:'too_low',  t:'Too low' }
+            ]
+          },
+          {
+            id:'sp_A_magnitude',
+            label:'What is the precise magnitude of error A? (e.g., 20 cents / a semitone / augmented fourth / “Not sure”)',
+            type:'text', required:true
+          }
+        ]
+      },
+
+      // Error B
+      {
+        id:'sp_B_block',
+        label:'Error B',
+        type:'group',
+        items:[
+          {
+            id:'sp_B_direction',
+            label:'Is error B “too high” or “too low”?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_high', t:'Too high' },
+              { v:'too_low',  t:'Too low' }
+            ]
+          },
+          {
+            id:'sp_B_magnitude',
+            label:'What is the precise magnitude of error B?',
+            type:'text', required:true
+          }
+        ]
+      },
+      {
+        id:'sp_gray_readable',
+        label:'Is the image inside the yellow rectangle (detailed pitch visualization) readable?',
+        type:'likert7', required:true
+      },
+      {
+        id:'sp_anim_notehead',
+        label:'Is the “note-head movement” animation readable?',
+        type:'likert7', required:true
+      },
+
+      {
+        id:'sp_anim_fine',
+        label:'Is the “fine pitch deviation graphic” (after clicking the gauge icon) readable?',
+        type:'likert7', required:true
+      },
+            // 6) Open comments
+      { id:'vp_open_new1',
+        label:'Additional comments (Pitch visualization):',
+        type:'textarea', placeholder:'Any pros/cons or suggestions', required:false
+      }
     ]
   },
 
-  // C2. Rhythm visualization
+// C2. Rhythm visualization
   {
     id:'viz_rhythm1', type:'video+qs', tag:'Viz-Rhythm',
-    title:'II. Visualization: Rhythm Errors (1)',
-    video:'3rhythm.mp4',
-    caption:'Shows two types of rhythm errors (too fast / too slow) as well as colors and symbols.',
+    title:'II. Visualization: Rhythm Errors(rough)',
+    video:'3.1.mp4',
+    caption:'At the start of this video we show a legend and clearly circle two example errors (A and B) in the score.',
     questions:[
-      { id:'vr_is_rhy',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
-      { id:'vr_where_wrong',label:'Can you locate where the error occurs?', type:'likert7', required:true },
-      { id:'vr_kind',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
-      { id:'vr_readable',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
+      { id:'vr1_marks_meaning_clear',
+        label:'Do these marks(colored note heads + small note symbols and line above) clearly indicate “rhythm errors”?',
+        type:'likert7', required:true
+      },
+      { id:'vr1_count_errors',
+        label:'How many rhythm errors can you count in this excerpt? (Enter a number)',
+        type:'text', required:true
+      },
+      { id:'vr1_A_block',
+        label:'Error A',
+        type:'group',
+        items:[
+          { id:'vr1_A_direction',
+            label:'Is error A “too fast” (ahead) or “too slow” (behind)?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_fast', t:'Too fast (ahead of the beat)' },
+              { v:'too_slow', t:'Too slow (behind the beat)' }
+            ]
+          },
+          { id:'vr1_A_magnitude',
+            label:'What is the approximate amount of deviation for A (in beats)? (e.g., 0.25 beat / ⅛ beat / “Not sure”)',
+            type:'text', required:true
+          }
+        ]
+      },
+      { id:'vr1_B_block',
+        label:'Error B',
+        type:'group',
+        items:[
+          { id:'vr1_B_direction',
+            label:'Is error B “too fast” (ahead) or “too slow” (behind)?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_fast', t:'Too fast (ahead of the beat)' },
+              { v:'too_slow', t:'Too slow (behind the beat)' }
+            ]
+          },
+          { id:'vr1_B_magnitude',
+            label:'What is the approximate amount of deviation for B (in beats)?',
+            type:'text', required:true
+          }
+        ]
+      },
+      { id:'vr1_readable',
+        label:'Overall, is this rhythm error visualization easy to read?',
+        type:'likert7', required:true
+      },
+      { id:'vr1_open',
+        label:'Additional comments (Rhythm visualization — Version 1):',
+        type:'textarea', placeholder:'Any pros/cons or suggestions', required:false
+      }
     ]
   },
+{
+  id:'viz_combo_r', type:'video+qs', tag:'Viz-Rhythm',
+  title:'II. Visualization: Rhythm Errors (detailed)',
+  video:'sr.mp4',
+  caption:'Vertical lines/slanted guides show detailed rhythm. Click to reveal the line-rotation + horizontal note-head movement animation.',
+  questions:[
+
+    // Error A 
+    {
+      id:'sr_A_block',
+      label:'Error A',
+      type:'group',
+      items:[
+        {
+          id:'sr_A_direction',
+          label:'Is error A “too fast” (ahead) or “too slow” (behind)?',
+          type:'opts', required:true,
+          options:[
+            { v:'too_fast', t:'Too fast (ahead of the beat)' },
+            { v:'too_slow', t:'Too slow (behind the beat)' }
+          ]
+        },
+        {
+          id:'sr_A_magnitude',
+          label:'What is the specific amount of deviation for A (in beats)? (e.g., 0.25 beat / ⅛ beat / “Not sure”)',
+          type:'text', required:true
+        }
+      ]
+    },
+        // Error B 
+    {
+      id:'sr_B_block',
+      label:'Error B',
+      type:'group',
+      items:[
+        {
+          id:'sr_B_direction',
+          label:'Is error B “too fast” (ahead) or “too slow” (behind)?',
+          type:'opts', required:true,
+          options:[
+            { v:'too_fast', t:'Too fast (ahead of the beat)' },
+            { v:'too_slow', t:'Too slow (behind the beat)' }
+          ]
+        },
+        {
+          id:'sr_B_magnitude',
+          label:'What is the specific amount of deviation for A (in beats)?',
+          type:'text', required:true
+        }
+      ]
+    },
+
+    // Readability of line 
+    {
+      id:'sr_detail_readable',
+      label:'Is the detailed rhythm visualization (inside the yellow rectangle) readable?',
+      type:'likert7', required:true
+    },
+
+    // Readability of the rhythm animation
+    {
+      id:'sr_anim_readable',
+      label:'Is the rhythm animation (line rotation + horizontal note-head movement) readable?',
+      type:'likert7', required:true
+    },
+            // 6) Open comments
+      { id:'vr_open_new1',
+        label:'Additional comments (Pitch visualization):',
+        type:'textarea', placeholder:'Any pros/cons or suggestions', required:false
+      }
+  ]
+},
   {
-    id:'viz_rhythm2', type:'video+qs', tag:'Viz-Rhythm',
-    title:'II. Visualization: Rhythm Errors (2)',
-    video:'2.png',
-    caption:'Shows another rhythm errors viz with different logic.',
-    questions:[
-      { id:'vr_is_rhy2',     label:'Do these marks clearly indicate “rhythm”?', type:'likert7', required:true },
-      { id:'vr_where_wrong2',label:'Can you locate where the error occurs?', type:'likert7', required:true },
-      { id:'vr_kind2',       label:'Can you distinguish “too fast / too slow” and roughly the amount of deviation?', type:'likert7', required:true },
-      { id:'vr_readable2',   label:'Is it readable / easy to see overall?', type:'likert7', required:true }
+    id:'viz_rhythm2', type:'intro', tag:'Viz-Rhythm',
+    title:'II. Visualization: Different Rhythm Error Encodings',
+    video:'3.2.png',
+    caption:'Focused illustration: the same rhythm error rendered by two encodings.',
+    blocks:[
+      {
+        kind:'html',
+        html: `
+          <div class="notice" style="margin-bottom:12px;">
+            On the left, we can see the <strong>same rhythm error</strong> rendered by both encodings
+          </div>
+          <div style="line-height:1.6;">
+            <p><strong>Why two visualizations?</strong></p>
+            <ul>
+              <li><strong>Constant length:</strong> one beat is always represented with a constant visual length, independent of notation context.</li>
+              <li><strong>Notation-dependent length:</strong> the visual length of one beat depends on the local notational context (e.g., tuplets, beaming, accidentals), so spacing adapts to the score structure.</li>
+            </ul>
+          </div>
+        `
+      }
     ]
   },
   {
     id:'viz_rhythm3', type:'video+qs', tag:'Viz-Rhythm',
     title:'II. Visualization: Comparing Rhythm Error Visualizations',
     video:['1.png','2.png'],
-    caption:'Compare two rhythm error visualizations',
+    caption:'Compare the two rhythm error visualizations side by side.',
     questions:[
-      { id:'vr_is_rhy3', label:'Between these two rhythm visualizations, which one is easier to understand?', type:'likert7', required:true },
-      { id:'vr_open3',   label:'Additional comments (Rhythm visualization)', type:'textarea', placeholder:'Any pros/cons or suggestions you noticed', required:false }
+      {
+        id:'vr_cmp_prefer',
+        label:'Between these two rhythm visualizations, which one do you prefer?',
+        type:'opts', required:true,
+        options:[
+          { v:'constant',           t:'Constant length' },
+          { v:'notation_dependent', t:'Notation-dependent length' }
+        ]
+      },
+      {
+        id:'vr_cmp_amount',
+        label:'Which visualization makes it easier to assess the amount of deviation?',
+        type:'opts', required:true,
+        options:[
+          { v:'constant',           t:'Constant length' },
+          { v:'notation_dependent', t:'Notation-dependent length' }
+        ]
+      },
+      {
+        id:'vr_cmp_compare',
+        label:'Which visualization makes it easier to compare two different errors?',
+        type:'opts', required:true,
+        options:[
+          { v:'constant',           t:'Constant length' },
+          { v:'notation_dependent', t:'Notation-dependent length' }
+        ]
+      }
     ]
   },
 
   // C3. Combined visualization (performance mode)
   {
     id:'viz_combo_rough', type:'video+qs', tag:'Viz-Combined',
-    title:'II. Visualization: Combined (Pitch + Rhythm)',
-    video:'4combine1.mp4',
-    caption:'Performance mode: pitch and rhythm errors appear together.',
+    title:'II. Visualization: Combined (Pitch + Rhythm)(rough)',
+    video:'4.1.mp4',
+    caption:'This page shows pitch and rhythm error visualizations together.',
     questions:[
-      { id:'combine_pitch_rough', label:'Please rate the pitch visualization', type:'group', items:[
-          { id:'vc_pitch_localize', label:'Can you understand where the pitch went wrong?', type:'likert7', required:true },
-          { id:'vc_pitch_kind',     label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
-          { id:'vc_pitch_readable', label:'Are the icons/images for pitch readable / clear?', type:'likert7', required:true }
-      ]},
-      { id:'combine_rhythm_rough', label:'Please rate the rhythm visualization', type:'group', items:[
-          { id:'vc_rhythm_localize', label:'Can you understand where the rhythm went wrong?', type:'likert7', required:true },
-          { id:'vc_rhythm_kind',     label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
-          { id:'vc_rhythm_readable', label:'Are the icons/images for rhythm readable / clear?', type:'likert7', required:true }
-      ]},
-      { id:'combine_pitch_rhythm_rough', label:'Please rate the combined visualization (pitch + rhythm)', type:'group', items:[
-          { id:'vc_pr',            label:'Can you understand the meaning of the triangle that appears here?', type:'likert7', required:true },
-          { id:'vc_p_localize',    label:'Can you understand where the pitch went wrong?', type:'likert7', required:true },
-          { id:'vc_p_kind',        label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
-          { id:'vc_p_readable',    label:'Are pitch icons/images readable / clear?', type:'likert7', required:true },
-          { id:'vc_r_localize',    label:'Can you understand where the rhythm went wrong?', type:'likert7', required:true },
-          { id:'vc_r_kind',        label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
-          { id:'vc_r_readable',    label:'Are rhythm icons/images readable / clear?', type:'likert7', required:true }
-      ]}
+      // Pitch for A
+      { id:'vcr_A_pitch_block', label:'Error A — Pitch', type:'group',
+        items:[
+          { id:'vcr_A_pitch_direction',
+            label:'Is error A “too high” or “too low”?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_high', t:'Too high' },
+              { v:'too_low',  t:'Too low' }
+            ]
+          },
+          { id:'vcr_A_pitch_magnitude',
+            label:'What is the approximate magnitude of error A?',
+            type:'text', required:true
+          }
+        ]
+      },
+
+    // Rhythm for A
+      { id:'vcr_A_rhythm_block', label:'Error A — Rhythm', type:'group',
+        items:[
+          { id:'vcr_A_rhy_direction',
+            label:'Is error A “too fast” (ahead) or “too slow” (behind)?',
+            type:'opts', required:true,
+            options:[
+              { v:'too_fast', t:'Too fast (ahead of the beat)' },
+              { v:'too_slow', t:'Too slow (behind the beat)' }
+            ]
+          },
+          { id:'vcr_A_rhy_magnitude',
+            label:'What is the approximate amount of deviation for A (in beats)?',
+            type:'text', required:true
+          }
+        ]
+      },
+
+      // Overall readability
+      { id:'vcr_readable',
+        label:'Overall, is this combined error visualization easy to read?',
+        type:'likert7', required:true
+      },
+            // 6) Open comments
+      { id:'vc_open_new1',
+        label:'Additional comments:',
+        type:'textarea', placeholder:'Any pros/cons or suggestions', required:false
+      }
     ]
   },
+    // C3. Combined visualization (performance mode)
   {
-    id:'viz_combo_p', type:'video+qs', tag:'Viz-Combined',
-    title:'II. Visualization: Combined — Detailed Pitch Errors',
+    id:'viz_combo_detailed', type:'video+qs', tag:'Viz-Combined',
+    title:'II. Visualization: Combined (Pitch + Rhythm)(detailed)',
     video:'4combine2.mp4',
-    caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
+    caption:'This page shows pitch and rhythm error visualizations together in detail.',
     questions:[
-      { id:'vc_pitch_localize2', label:'Now can you understand exactly where the pitch went wrong?', type:'likert7', required:true },
-      { id:'vc_pitch_kind2',     label:'Can you tell “too high / too low” and the specific amount of deviation?', type:'likert7', required:true },
-      { id:'vc_pitch_readable2', label:'Are the detailed pitch icons/images readable / clear?', type:'likert7', required:true },
-      { id:'vc_rhy_localize2',   label:'At this time, rhythm error visualization is at the top of the rectangle. Can you understand where rhythm errors occur?', type:'likert7', required:true },
-      { id:'vc_rhy_kind2',       label:'Can you tell “too fast / too slow” and roughly how far off?', type:'likert7', required:true },
-      { id:'vc_rhy_readable2',   label:'Is the top rhythm visualization readable / clear?', type:'likert7', required:true },
-      { id:'vc_anim_pitch',     label:'Does the “note head movement” animation after clicking clearly express pitch errors?', type:'likert7', required:true },
-      { id:'vc_anim_meter',     label:'Does the “fine pitch deviation graphic” after clicking the gauge icon clearly express the error?', type:'likert7', required:true }
+      { id:'vcc_useful',
+        label:'Do you understand what the top horizontal line represents in the combined view?',
+        type:'likert7', required:true
+      },
+      // Overall readability
+      { id:'vcc_readable',
+        label:'Is the horizontal line above the rectangle easy to read?',
+        type:'likert7', required:true
+      }
     ]
   },
+
+  // Overall system questions (moved here, just before finish)
   {
-    id:'viz_combo_r', type:'video+qs', tag:'Viz-Combined',
-    title:'II. Visualization: Combined — Detailed Rhythm Errors',
-    video:'4combine3.mp4',
-    caption:'circle shows detailed pitch and vertical lines show detailed rhythm. Includes click-triggered animations/images.',
+    id:'overall_system', type:'questions', tag:'Overall',
+    title:'Overall Evaluation',
+    caption:'To conclude, please rate the overall usefulness and your intention to use.',
     questions:[
-      { id:'vc_pitch_localize3', label:'Now can you understand exactly where the rhythm went wrong?', type:'likert7', required:true },
-      { id:'vc_pitch_kind3',     label:'Can you tell “too fast / too slow” and the specific amount of deviation?', type:'likert7', required:true },
-      { id:'vc_pitch_readable3', label:'Are the slanted rhythm lines readable / clear?', type:'likert7', required:true },
-      { id:'vc_rhy_localize3',   label:'At this time, pitch error visualization is at the top of the rectangle. Can you understand where pitch errors occur?', type:'likert7', required:true },
-      { id:'vc_rhy_kind3',       label:'Can you tell “too high / too low” and roughly how far off?', type:'likert7', required:true },
-      { id:'vc_rhy_readable3',   label:'Is the top pitch visualization readable / clear?', type:'likert7', required:true },
-      { id:'vc_anim_rhy',       label:'After clicking the slanted line, does the “line rotation + horizontal note-head movement” animation clearly express rhythm errors?', type:'likert7', required:true },
-      { id:'vc_sep_or_together',label:'Focusing separately on pitch and rhythm vs. both together: do you prefer handling them separately? (1 = Strongly disagree, 7 = Strongly agree)', type:'likert7', required:true },
-      { id:'vc_open',           label:'Additional comments (Combined visualization / interaction)', type:'textarea', placeholder:'Any thoughts on the combined visuals or interactions', required:false }
+      { id:'overall_useful_system', label:'Do you think this system would be useful for you?', type:'likert7', required:true },
+      { id:'overall_intend_use',    label:'Would you be willing to use it in your daily practice?', type:'likert7', required:true }
     ]
   },
 
@@ -422,21 +716,17 @@ const content = document.getElementById('content');
 const titleEl = document.getElementById('title');
 const tagEl = document.getElementById('pageTag');
 const bar = document.getElementById('bar');
-const vid = document.getElementById('vid');
 const vidCaption = document.getElementById('vidCaption');
 const btnNext = document.getElementById('btnNext');
 const btnBack = document.getElementById('btnBack');
 
+let STATE = { page: 0, answers: {} }; // refresh clears answers
 
-let STATE = { page: 0, answers: {} };
-if(!STATE.page){ STATE.page = 0; STATE.answers = {}; }
-
-function save(){  }
+function save(){ /* no-op to avoid persistence */ }
 
 function pct(n){ return Math.round((n)/(PAGES.length-1)*100); }
 
 function render(){
-  // Header & progress
   const p = PAGES[STATE.page];
   titleEl.textContent = p.title;
   tagEl.textContent = p.tag || '';
@@ -444,7 +734,6 @@ function render(){
 
   // Media area
   const videoWrapEl = document.querySelector('.videoWrap');
-  const vidCaptionEl = vidCaption;
 
   const isVideoPath = (path) => /\.(mp4|webm|ogg)(\?.*)?$/i.test(path || '');
   const isImagePath = (path) => /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(path || '');
@@ -503,14 +792,14 @@ function render(){
   clearMedia();
   if (p.video) {
     renderMedia(p.video);
-    vidCaptionEl.textContent = p.caption || '';
+    vidCaption.innerHTML = p.caption || '';
   } else {
     if (videoWrapEl) videoWrapEl.style.display = 'none';
-    vidCaptionEl.textContent = p.caption || 'Proceed after answering on the right.';
+    vidCaption.innerHTML = p.caption || 'Proceed after answering on the right.';
   }
 
   if (p.id === 'consent') {
-    // Consent page: show centered text only
+    // Consent page: show centered text in the media area
     videoWrapEl.style.display = 'flex';
     videoWrapEl.style.flexDirection = 'column';
     videoWrapEl.style.justifyContent = 'center';
@@ -546,7 +835,7 @@ function render(){
   // Footer buttons
   btnBack.style.visibility = STATE.page === 0 ? 'hidden' : 'visible';
   if (p.type === 'finish') {
-    btnNext.style.display = 'none';   // hide "Next/Finish" on last page
+    btnNext.style.display = 'none';
   } else {
     btnNext.style.display = 'inline-block';
     btnNext.textContent = STATE.page === PAGES.length - 1 ? 'Finish' : 'Next';
@@ -554,12 +843,12 @@ function render(){
 
   fitMediaHeights(videoWrapEl);
   updateConditionalVisibility(p);
+
+  // Scroll to top after render
   content.scrollTop = 0;
-
   requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); 
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   });
-
 }
 
 function isVisibleQuestion(q){
@@ -573,17 +862,18 @@ function isVisibleQuestion(q){
 
 function updateConditionalVisibility(p){
   const all = [];
-  const collect = (qs)=> (qs||[]).forEach(q=>{
-    all.push(q);   
-    if(q.type==='group') collect(q.items||[]);
-    else all.push(q);
-  });
-  collect(p.questions);
+  (function collect(qs){
+    (qs||[]).forEach(q=>{
+      all.push(q); // include group itself
+      if(q.type==='group') collect(q.items||[]);
+    });
+  })(p.questions);
 
   all.forEach(q=>{
     const el = content.querySelector(`[data-qid="${q.id}"]`);
     if(!el) return;
-    el.style.display = isVisibleQuestion(q) ? '' : 'none';
+    const visible = isVisibleQuestion(q);
+    el.style.display = visible ? '' : 'none';
   });
 }
 
@@ -611,25 +901,30 @@ function fitMediaHeights(wrap){
 
 function renderQuestion(q){
   if(q.type==='group'){
-    const wrap=document.createElement('div'); 
+    const wrap=document.createElement('div');
     wrap.className='q';
-    wrap.dataset.qid = q.id; 
-    const h=document.createElement('h4'); 
-    h.textContent=q.label; 
-    wrap.appendChild(h);
+    wrap.dataset.qid = q.id;
+    const h=document.createElement('h4'); h.textContent=q.label; wrap.appendChild(h);
     (q.items||[]).forEach(item=> wrap.appendChild(renderQuestion(item)));
     return wrap;
   }
+  if(q.type==='html_info'){
+    const wrap=document.createElement('div'); wrap.className='q'; wrap.dataset.qid=q.id;
+    const d=document.createElement('div'); d.innerHTML='<em>Use Next to continue.</em>';
+    wrap.appendChild(d); return wrap;
+  }
+
   const node=document.createElement('div'); node.className='q';
-  node.dataset.qid = q.id; // ★ 用于条件显示定位
+  node.dataset.qid = q.id;
   const h=document.createElement('h4'); h.textContent=q.label; node.appendChild(h);
   const ans = STATE.answers[q.id];
+
   if(q.type==='likert7'){
     node.appendChild(renderLikert(q.id, ans));
     node.appendChild(hint('1 = Strongly disagree … 7 = Strongly agree'));
   } else if(q.type==='yesno'){
     node.appendChild(renderOpts(q.id,[{v:'yes',t:'Yes'},{v:'no',t:'No'}], ans));
-  } else if(q.type==='opts'){ // ★ 支持自定义单选选项
+  } else if(q.type==='opts'){
     const items = (q.options||[]).map(it=>({v:it.v, t:it.t}));
     node.appendChild(renderOpts(q.id, items, ans));
   } else if(q.type==='checkbox'){
@@ -638,12 +933,11 @@ function renderQuestion(q){
     node.appendChild(renderText({id:q.id, placeholder:q.placeholder||'', value:ans||''}));
   } else if(q.type==='textarea'){
     const ta=document.createElement('textarea'); ta.rows=4; ta.placeholder=q.placeholder||'\n'; ta.value=ans||'';
-    ta.oninput=()=>{ STATE.answers[q.id]=ta.value; save(); };
+    ta.oninput=()=>{ STATE.answers[q.id]=ta.value; save(); updateConditionalVisibility(PAGES[STATE.page]); };
     node.appendChild(ta);
   }
   return node;
 }
-
 
 function renderLikert(id, value){
   const box=document.createElement('div'); box.className='likert';
@@ -651,7 +945,7 @@ function renderLikert(id, value){
     const lab=document.createElement('label');
     const inp=document.createElement('input'); inp.type='radio'; inp.name=id; inp.value=String(i);
     if(String(value)===String(i)) inp.checked=true;
-    inp.onchange=()=>{ STATE.answers[id]=i; save(); };
+    inp.onchange=()=>{ STATE.answers[id]=i; save(); updateConditionalVisibility(PAGES[STATE.page]); };
     const small=document.createElement('small'); small.className='hint';
     small.textContent = i===1?'1':(i===4?'4':(i===7?'7':''));
     lab.appendChild(inp); lab.appendChild(small); box.appendChild(lab);
@@ -663,7 +957,8 @@ function renderOpts(id, items, value){
   items.forEach(it=>{
     const lab=document.createElement('label');
     const inp=document.createElement('input'); inp.type='radio'; inp.name=id; inp.value=it.v;
-    if(value===it.v) inp.checked=true; inp.onchange=()=>{ STATE.answers[id]=it.v; save(); };
+    if(value===it.v) inp.checked=true;
+    inp.onchange=()=>{ STATE.answers[id]=it.v; save(); updateConditionalVisibility(PAGES[STATE.page]); };
     lab.appendChild(inp); lab.appendChild(document.createTextNode(it.t)); box.appendChild(lab);
   });
   return box;
@@ -674,10 +969,11 @@ function renderChecks(id, items, value){
   items.forEach(it=>{
     const lab=document.createElement('label');
     const inp=document.createElement('input'); inp.type='checkbox'; inp.value=it.value;
-    if(set.has(it.value)) inp.checked=true; inp.onchange=()=>{
+    if(set.has(it.value)) inp.checked=true;
+    inp.onchange=()=>{
       if(!STATE.answers[id]) STATE.answers[id]=[];
       const arr=new Set(STATE.answers[id]); inp.checked?arr.add(it.value):arr.delete(it.value);
-      STATE.answers[id]=Array.from(arr); save();
+      STATE.answers[id]=Array.from(arr); save(); updateConditionalVisibility(PAGES[STATE.page]);
     };
     lab.appendChild(inp); lab.appendChild(document.createTextNode(it.label)); box.appendChild(lab);
   });
@@ -685,22 +981,21 @@ function renderChecks(id, items, value){
 }
 function renderText(cfg){
   const wrap=document.createElement('div'); wrap.className='q';
+  wrap.dataset.qid = cfg.id;
   const inp=document.createElement('input'); inp.type='text'; inp.placeholder=cfg.placeholder||''; inp.value=STATE.answers[cfg.id]||'';
-  inp.oninput=()=>{ STATE.answers[cfg.id]=inp.value; save(); };
+  inp.oninput=()=>{ STATE.answers[cfg.id]=inp.value; save(); updateConditionalVisibility(PAGES[STATE.page]); };
   wrap.appendChild(inp); return wrap;
 }
 
 function renderCheckbox(cfg){
   const wrap=document.createElement('div'); wrap.className='q';
+  wrap.dataset.qid = cfg.id;
   const lab=document.createElement('label'); lab.style.display='flex'; lab.style.alignItems='center'; lab.style.gap='10px';
   const inp=document.createElement('input'); inp.type='checkbox';
   const current=STATE.answers[cfg.id];
   const isChecked=Array.isArray(current) ? current.includes('yes') : current===true;
   inp.checked = !!isChecked;
-  inp.onchange=()=>{
-    STATE.answers[cfg.id] = inp.checked ? ['yes'] : [];
-    save();
-  };
+  inp.onchange=()=>{ STATE.answers[cfg.id] = inp.checked ? ['yes'] : []; save(); updateConditionalVisibility(PAGES[STATE.page]); };
   const text=document.createTextNode(cfg.label || (cfg.options?.[0]?.label || 'I agree'));
   lab.appendChild(inp); lab.appendChild(text);
   wrap.appendChild(lab);
@@ -715,7 +1010,7 @@ function validate(){
   if(p.type==='video+qs' || p.type==='questions'){
     (p.questions||[]).forEach(q=>{
       if(q.type==='group'){
-        if(!isVisibleQuestion(q)) return;   
+        if(!isVisibleQuestion(q)) return;   // skip entire group if hidden
         (q.items||[]).forEach(it=>{
           if(it.required && isVisibleQuestion(it)) requiredIds.push(it.id);
         });
@@ -736,8 +1031,7 @@ function validate(){
   return true;
 }
 
-
-
+// Navigation (Next / Back)
 btnNext.addEventListener('click',()=>{
   if(STATE.page < PAGES.length-1){
     if(!validate()) { alert('Please complete the required questions on this page first.'); return; }
@@ -746,10 +1040,8 @@ btnNext.addEventListener('click',()=>{
 
     if(current.id === 'pre_gate'){
       const ans = STATE.answers['done_interview_before']; // 'yes' or 'no'
-
       const idxOverview = PAGES.findIndex(p=>p.id==='overview');
       const idxBackground = PAGES.findIndex(p=>p.id==='pre_background');
-
       if(ans === 'yes'){
         STATE.page = (idxOverview>=0 ? idxOverview : STATE.page+1);
       } else {
@@ -767,6 +1059,7 @@ btnNext.addEventListener('click',()=>{
     STATE.page++; save(); render();
   }
 });
+
 function shouldSkipPage(page){
   if(!page) return false;
   if (page.id === 'pre_background' && STATE.answers['done_interview_before'] === 'yes') {
@@ -778,15 +1071,13 @@ function shouldSkipPage(page){
 btnBack.addEventListener('click', ()=>{
   if (STATE.page > 0) {
     let prev = STATE.page - 1;
-    while (prev >= 0 && shouldSkipPage(PAGES[prev])) {
-      prev--;
-    }
+    while (prev >= 0 && shouldSkipPage(PAGES[prev])) { prev--; }
     STATE.page = Math.max(0, prev);
     save(); render();
   }
 });
 
-
+// Export & Reset
 content.addEventListener('click', (e)=>{
   if(e.target && e.target.id==='btnExport'){
     const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
@@ -795,17 +1086,16 @@ content.addEventListener('click', (e)=>{
   }
   if(e.target && e.target.id==='btnReset'){
     if(confirm('Clear local data and restart from the first page?')){
-      localStorage.removeItem('eval_state_v2'); STATE={page:0,answers:{}}; render();
+      STATE={page:0,answers:{}}; render();
     }
   }
 });
+
+// Make conditional UI react instantly
 content.addEventListener('input', ()=>{ updateConditionalVisibility(PAGES[STATE.page]); });
-content.addEventListener('change', ()=>{ 
-  updateConditionalVisibility(PAGES[STATE.page]); 
-});
+content.addEventListener('change', ()=>{ updateConditionalVisibility(PAGES[STATE.page]); });
 
-
-
+// Initial render
 render();
 </script>
 </body>
